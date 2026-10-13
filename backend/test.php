@@ -1,23 +1,19 @@
 <?php
 // backend/test.php
 require_once __DIR__ . '/config/database.php';
+require_once __DIR__ . '/controllers/auth/AuthController.php';
 
-$db = getDB();
-assert($db instanceof PDO, 'Database connection failed');
+// Check Controller class
+assert(class_exists('AuthController'), 'AuthController class not found');
+assert(method_exists('AuthController', 'login'), 'AuthController::login method not found');
 
-// Test insert & query
-$testEmail = 'test_' . time() . '@example.com';
-$stmt = $db->prepare('INSERT INTO members (name, email, phone) VALUES (?, ?, ?)');
-$stmt->execute(['Test User', $testEmail, '08123456789']);
-$id = (int) $db->lastInsertId();
-assert($id > 0, 'Insert member failed');
+// Check validation logic when payload empty
+ob_start();
+AuthController::login();
+$output = ob_get_clean();
+$data = json_decode($output, true);
 
-$stmt = $db->prepare('SELECT * FROM members WHERE id = ?');
-$stmt->execute([$id]);
-$row = $stmt->fetch();
-assert($row['email'] === $testEmail, 'Fetch member failed');
+assert(isset($data['error']), 'Empty login payload must return error message');
+assert(http_response_code() === 422, 'Empty login payload must return 422 status code');
 
-// Cleanup
-$db->prepare('DELETE FROM members WHERE id = ?')->execute([$id]);
-
-echo "All backend tests passed.\n";
+echo "AuthController unit tests passed.\n";

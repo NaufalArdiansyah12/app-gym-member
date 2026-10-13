@@ -12,53 +12,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 header('Content-Type: application/json');
 
 require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../controllers/auth/AuthController.php';
 
 $uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 $method = $_SERVER['REQUEST_METHOD'];
 
-// ponytail: native route match sederhana. Pakai router library jika route > 15.
-if ($uri === '/api/health' && $method === 'GET') {
-    try {
-        getDB()->query('SELECT 1');
-        echo json_encode(['status' => 'ok', 'database' => 'connected']);
-    } catch (Throwable $e) {
-        http_response_code(500);
-        echo json_encode(['status' => 'error', 'message' => $e->getMessage()]);
-    }
+// ponytail: regex suffix match agar kompatibel di dev-server (port 8000) dan subfolder Apache LAMPP.
+if (preg_match('#/api/login/?$#', $uri) && $method === 'POST') {
+    AuthController::login();
     exit;
-}
-
-if ($uri === '/api/members') {
-    $db = getDB();
-
-    if ($method === 'GET') {
-        $stmt = $db->query('SELECT * FROM members ORDER BY id DESC');
-        echo json_encode($stmt->fetchAll());
-        exit;
-    }
-
-    if ($method === 'POST') {
-        $input = json_decode(file_get_contents('php://input'), true) ?? [];
-        if (empty($input['name']) || empty($input['email'])) {
-            http_response_code(422);
-            echo json_encode(['error' => 'name dan email wajib diisi']);
-            exit;
-        }
-
-        $stmt = $db->prepare('INSERT INTO members (name, email, phone) VALUES (?, ?, ?)');
-        $stmt->execute([
-            $input['name'],
-            $input['email'],
-            $input['phone'] ?? null
-        ]);
-
-        http_response_code(201);
-        echo json_encode([
-            'id' => (int) $db->lastInsertId(),
-            'message' => 'Member tersimpan'
-        ]);
-        exit;
-    }
 }
 
 http_response_code(404);

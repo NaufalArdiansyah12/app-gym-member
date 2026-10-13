@@ -3,7 +3,7 @@
   "private": true,
   "scripts": {
     "dev:backend": "php -S 127.0.0.1:8000 -t backend/public",
-    "dev:frontend": "npm --prefix frontend run dev",
+    "dev:frontend": "php -S 127.0.0.1:3000 -t frontend",
     "db:migrate": "mysql -u root < database/schema.sql",
     "test:backend": "php backend/test.php"
   }
