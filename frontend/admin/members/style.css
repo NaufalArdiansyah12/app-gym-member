@@ -104,6 +104,13 @@
 
 .status {
     white-space: nowrap;
+    transition: transform 0.18s ease, filter 0.18s ease, box-shadow 0.18s ease;
+}
+
+.package-card-item:hover .status,
+.package-card-item.is-selected .status {
+    transform: scale(1.03);
+    filter: brightness(1.08);
 }
 
 .success-bg {
