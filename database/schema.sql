@@ -74,3 +74,46 @@ ON DUPLICATE KEY UPDATE
     emergency_contact = VALUES(emergency_contact),
     membership_status = VALUES(membership_status),
     membership_expires_at = VALUES(membership_expires_at);
+
+-- Seeders Paket
+INSERT INTO paket (id, nama_paket, durasi_hari, harga, tersedia) VALUES
+(1, '1 Bulan', 30, 150000.00, 1),
+(2, '3 Bulan', 90, 400000.00, 1),
+(3, '6 Bulan', 180, 750000.00, 1),
+(4, '12 Bulan', 365, 1300000.00, 1)
+ON DUPLICATE KEY UPDATE 
+    nama_paket = VALUES(nama_paket),
+    durasi_hari = VALUES(durasi_hari),
+    harga = VALUES(harga),
+    tersedia = VALUES(tersedia);
+
+-- Seeders Langganan
+INSERT INTO langganan (id, id_user, id_paket, tanggal_mulai, tanggal_selesai, status) VALUES
+(1, 2, 2, DATE_SUB(CURRENT_DATE, INTERVAL 30 DAY), DATE_ADD(CURRENT_DATE, INTERVAL 60 DAY), 'aktif'),
+(2, 3, 1, DATE_SUB(CURRENT_DATE, INTERVAL 27 DAY), DATE_ADD(CURRENT_DATE, INTERVAL 3 DAY), 'aktif'),
+(3, 4, 3, DATE_SUB(CURRENT_DATE, INTERVAL 185 DAY), DATE_SUB(CURRENT_DATE, INTERVAL 5 DAY), 'kedaluwarsa')
+ON DUPLICATE KEY UPDATE 
+    id_user = VALUES(id_user),
+    id_paket = VALUES(id_paket),
+    tanggal_mulai = VALUES(tanggal_mulai),
+    tanggal_selesai = VALUES(tanggal_selesai),
+    status = VALUES(status);
+
+-- Seeders Transaksi
+INSERT INTO transaksi (id, id_langganan, jumlah_bayar, metode_pembayaran, dibayar_pada) VALUES
+(1, 1, 400000.00, 'qris', DATE_SUB(NOW(), INTERVAL 30 DAY)),
+(2, 2, 150000.00, 'transfer', DATE_SUB(NOW(), INTERVAL 27 DAY)),
+(3, 3, 750000.00, 'tunai', DATE_SUB(NOW(), INTERVAL 185 DAY))
+ON DUPLICATE KEY UPDATE 
+    id_langganan = VALUES(id_langganan),
+    jumlah_bayar = VALUES(jumlah_bayar),
+    metode_pembayaran = VALUES(metode_pembayaran);
+
+-- Seeders Presensi Hari Ini
+INSERT INTO presensi (id, id_user, waktu_presensi) VALUES
+(1, 4, CONCAT(CURRENT_DATE, ' 08:21:00')),
+(2, 3, CONCAT(CURRENT_DATE, ' 08:35:00')),
+(3, 2, CONCAT(CURRENT_DATE, ' 08:42:00'))
+ON DUPLICATE KEY UPDATE 
+    id_user = VALUES(id_user),
+    waktu_presensi = VALUES(waktu_presensi);
