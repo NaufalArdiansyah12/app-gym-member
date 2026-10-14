@@ -15,7 +15,7 @@ class AuthController {
         }
 
         $db = getDB();
-        $stmt = $db->prepare('SELECT id, name, email, password, role FROM users WHERE email = ? LIMIT 1');
+        $stmt = $db->prepare('SELECT id, member_code, name, email, password, role, phone, gender, address, emergency_contact, membership_status, membership_expires_at FROM users WHERE email = ? LIMIT 1');
         $stmt->execute([$email]);
         $user = $stmt->fetch();
 
@@ -30,10 +30,17 @@ class AuthController {
         }
 
         $_SESSION['user'] = [
-            'id'    => $user['id'],
-            'name'  => $user['name'],
-            'email' => $user['email'],
-            'role'  => $user['role'],
+            'id'                    => $user['id'],
+            'member_code'           => $user['member_code'],
+            'name'                  => $user['name'],
+            'email'                 => $user['email'],
+            'role'                  => $user['role'],
+            'phone'                 => $user['phone'],
+            'gender'                => $user['gender'],
+            'address'               => $user['address'],
+            'emergency_contact'     => $user['emergency_contact'],
+            'membership_status'     => $user['membership_status'],
+            'membership_expires_at' => $user['membership_expires_at'],
         ];
 
         echo json_encode([

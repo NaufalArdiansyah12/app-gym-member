@@ -13,6 +13,8 @@ header('Content-Type: application/json');
 
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../controllers/auth/AuthController.php';
+require_once __DIR__ . '/../controller/admin/CashierController.php';
+require_once __DIR__ . '/../controller/admin/AttendanceController.php';
 
 $uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 $method = $_SERVER['REQUEST_METHOD'];
@@ -20,6 +22,36 @@ $method = $_SERVER['REQUEST_METHOD'];
 // ponytail: regex suffix match agar kompatibel di dev-server (port 8000) dan subfolder Apache LAMPP.
 if (preg_match('#/api/login/?$#', $uri) && $method === 'POST') {
     AuthController::login();
+    exit;
+}
+
+if (preg_match('#/api/admin/cashier/?$#', $uri) && $method === 'GET') {
+    CashierController::initData();
+    exit;
+}
+
+if (preg_match('#/api/admin/cashier/transactions/?$#', $uri) && $method === 'GET') {
+    CashierController::getTransactions();
+    exit;
+}
+
+if (preg_match('#/api/admin/cashier/transactions/?$#', $uri) && $method === 'POST') {
+    CashierController::createTransaction();
+    exit;
+}
+
+if (preg_match('#/api/admin/attendance/checkin/?$#', $uri) && $method === 'POST') {
+    AttendanceController::checkIn();
+    exit;
+}
+
+if (preg_match('#/api/admin/attendance/today/?$#', $uri) && $method === 'GET') {
+    AttendanceController::today();
+    exit;
+}
+
+if (preg_match('#/api/admin/cashier/members/?$#', $uri) && $method === 'GET') {
+    CashierController::searchMembers();
     exit;
 }
 
