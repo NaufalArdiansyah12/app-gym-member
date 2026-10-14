@@ -13,17 +13,13 @@ header('Content-Type: application/json');
 
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../controllers/auth/AuthController.php';
-<<<<<<< HEAD
-require_once __DIR__ . '/../controller/admin/CashierController.php';
-require_once __DIR__ . '/../controller/admin/AttendanceController.php';
-=======
 require_once __DIR__ . '/../controllers/admin/AdminController.php';
 require_once __DIR__ . '/../controllers/admin/DashboardController.php';
 require_once __DIR__ . '/../controllers/admin/MemberController.php';
 require_once __DIR__ . '/../controllers/admin/PackageController.php';
 require_once __DIR__ . '/../controllers/admin/AttendanceController.php';
 require_once __DIR__ . '/../controllers/admin/TransactionController.php';
->>>>>>> origin/be/martino
+require_once __DIR__ . '/../controllers/admin/CashierController.php';
 
 $uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 $method = $_SERVER['REQUEST_METHOD'];
@@ -44,35 +40,6 @@ if (preg_match('#/api/login/?$#', $uri) && $method === 'POST') {
     exit;
 }
 
-<<<<<<< HEAD
-if (preg_match('#/api/admin/cashier/?$#', $uri) && $method === 'GET') {
-    CashierController::initData();
-    exit;
-}
-
-if (preg_match('#/api/admin/cashier/transactions/?$#', $uri) && $method === 'GET') {
-    CashierController::getTransactions();
-    exit;
-}
-
-if (preg_match('#/api/admin/cashier/transactions/?$#', $uri) && $method === 'POST') {
-    CashierController::createTransaction();
-    exit;
-}
-
-if (preg_match('#/api/admin/attendance/checkin/?$#', $uri) && $method === 'POST') {
-    AttendanceController::checkIn();
-    exit;
-}
-
-if (preg_match('#/api/admin/attendance/today/?$#', $uri) && $method === 'GET') {
-    AttendanceController::today();
-    exit;
-}
-
-if (preg_match('#/api/admin/cashier/members/?$#', $uri) && $method === 'GET') {
-    CashierController::searchMembers();
-=======
 // 2. Admin Dashboard Route
 if (preg_match('#/api/admin/dashboard/?$#', $uri) && $method === 'GET') {
     DashboardController::index();
@@ -141,6 +108,16 @@ if (preg_match('#/api/admin/packages/?$#', $uri)) {
 }
 
 // 5. Admin Attendance Routes
+if (preg_match('#/api/admin/attendance/checkin/?$#', $uri) && $method === 'POST') {
+    AttendanceController::checkIn();
+    exit;
+}
+
+if (preg_match('#/api/admin/attendance/today/?$#', $uri) && $method === 'GET') {
+    AttendanceController::today();
+    exit;
+}
+
 if (preg_match('#/api/admin/attendance/?$#', $uri)) {
     if ($method === 'GET') {
         AttendanceController::index();
@@ -152,7 +129,29 @@ if (preg_match('#/api/admin/attendance/?$#', $uri)) {
     }
 }
 
-// 6. Admin Transactions & Reports Routes
+// 6. Admin Cashier Routes
+if (preg_match('#/api/admin/cashier/members/?$#', $uri) && $method === 'GET') {
+    CashierController::searchMembers();
+    exit;
+}
+
+if (preg_match('#/api/admin/cashier/transactions/?$#', $uri)) {
+    if ($method === 'GET') {
+        CashierController::getTransactions();
+        exit;
+    }
+    if ($method === 'POST') {
+        CashierController::createTransaction();
+        exit;
+    }
+}
+
+if (preg_match('#/api/admin/cashier/?$#', $uri) && $method === 'GET') {
+    CashierController::initData();
+    exit;
+}
+
+// 7. Admin Transactions & Reports Routes
 if (preg_match('#/api/admin/transactions/?$#', $uri)) {
     if ($method === 'GET') {
         TransactionController::index();
@@ -166,7 +165,6 @@ if (preg_match('#/api/admin/transactions/?$#', $uri)) {
 
 if (preg_match('#/api/admin/reports/?$#', $uri) && $method === 'GET') {
     TransactionController::reports();
->>>>>>> origin/be/martino
     exit;
 }
 
