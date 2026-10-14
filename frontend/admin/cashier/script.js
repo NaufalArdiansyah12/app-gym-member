@@ -72,11 +72,16 @@ const paymentFilter = document.getElementById('paymentFilter');
 const transactionRows = document.getElementById('transactionRows');
 const transactionCount = document.getElementById('transactionCount');
 
-const modalReceipt = document.getElementById('modalReceipt');
-const btnCloseReceipt = document.getElementById('btnCloseReceipt');
-const btnDoneReceipt = document.getElementById('btnDoneReceipt');
-const btnPrintReceipt = document.getElementById('btnPrintReceipt');
-const receiptContent = document.getElementById('receiptContent');
+// Toast Notification
+const toast = document.getElementById('toast');
+let toastTimer;
+function showToast(message) {
+    if (!toast) return;
+    toast.textContent = message;
+    toast.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toast.classList.remove('show'), 3000);
+}
 
 // State
 let packages = [];
@@ -153,12 +158,6 @@ modalAddTransaction?.addEventListener('click', (e) => {
     if (e.target === modalAddTransaction) closeModal(modalAddTransaction, btnOpenAddTransaction);
 });
 
-btnCloseReceipt?.addEventListener('click', () => closeModal(modalReceipt, btnOpenAddTransaction));
-btnDoneReceipt?.addEventListener('click', () => closeModal(modalReceipt, btnOpenAddTransaction));
-modalReceipt?.addEventListener('click', (e) => {
-    if (e.target === modalReceipt) closeModal(modalReceipt, btnOpenAddTransaction);
-});
-
 document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
         if (!packageSelectMenu.hidden) {
@@ -171,13 +170,9 @@ document.addEventListener('keydown', (e) => {
         }
         if (modalAddTransaction?.classList.contains('is-active')) {
             closeModal(modalAddTransaction, btnOpenAddTransaction);
-        } else if (modalReceipt?.classList.contains('is-active')) {
-            closeModal(modalReceipt, btnOpenAddTransaction);
         }
     }
 });
-
-btnPrintReceipt?.addEventListener('click', () => window.print());
 
 // Custom Liquid Glass Dropdown (Pilih Paket)
 function renderPackageSelectMenu() {
@@ -498,7 +493,7 @@ function renderTransactions() {
     transactionCount.textContent = `Menampilkan ${filtered.length} dari ${transactions.length} transaksi`;
 
     if (!filtered.length) {
-        transactionRows.innerHTML = '<tr><td colspan="7" class="empty-row">Tidak ada transaksi ditemukan.</td></tr>';
+        transactionRows.innerHTML = '<tr><td colspan="6" class="empty-row">Tidak ada transaksi ditemukan.</td></tr>';
         return;
     }
 
@@ -523,68 +518,10 @@ function renderTransactions() {
                 <td>
                     <span class="method-tag method-${escapeHTML(t.metode_pembayaran)}">${escapeHTML(t.metode_pembayaran)}</span>
                 </td>
-                <td><b>${formatRupiah(t.jumlah_bayar)}</b></td>
-                <td>
-                    <button class="btn-icon-receipt" type="button" data-trx-id="${t.id}" title="Lihat Struk">Struk</button>
-                </td>
+                <td style="text-align: right;"><b>${formatRupiah(t.jumlah_bayar)}</b></td>
             </tr>
         `;
     }).join('');
-
-    // Attach click listeners to view receipt buttons
-    transactionRows.querySelectorAll('.btn-icon-receipt').forEach((btn) => {
-        btn.addEventListener('click', () => {
-            const trxId = Number(btn.dataset.trxId);
-            const found = transactions.find((t) => Number(t.id) === trxId);
-            if (found) {
-                openReceiptModal({
-                    invoice_code: 'TRX-' + (found.dibayar_pada ? found.dibayar_pada.slice(0, 10).replaceAll('-', '') : '') + '-' + String(found.id).padStart(4, '0'),
-                    member: {
-                        name: found.member_name,
-                        member_code: found.member_code,
-                    },
-                    paket: {
-                        nama_paket: found.nama_paket,
-                        durasi_hari: found.durasi_hari,
-                        harga: found.harga_paket,
-                    },
-                    tipe_transaksi: 'Transaksi Membership',
-                    tanggal_mulai: found.tanggal_mulai,
-                    tanggal_selesai: found.tanggal_selesai,
-                    metode_pembayaran: found.metode_pembayaran,
-                    jumlah_bayar: found.jumlah_bayar,
-                    kembalian: Math.max(0, Number(found.jumlah_bayar) - Number(found.harga_paket)),
-                    dibayar_pada: found.dibayar_pada,
-                });
-            }
-        });
-    });
-}
-
-function openReceiptModal(data) {
-    const formattedDate = data.dibayar_pada
-        ? new Date(data.dibayar_pada.replace(' ', 'T')).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' })
-        : new Date().toLocaleString('id-ID');
-
-    receiptContent.innerHTML = `
-        <div class="receipt-line"><span>No. Invoice</span><strong>${escapeHTML(data.invoice_code)}</strong></div>
-        <div class="receipt-line"><span>Tipe Transaksi</span><strong>${escapeHTML(data.tipe_transaksi || 'Transaksi Membership')}</strong></div>
-        <div class="receipt-line"><span>Waktu Transaksi</span><span>${formattedDate}</span></div>
-        <div class="receipt-divider"></div>
-        <div class="receipt-line"><span>Nama Member</span><strong>${escapeHTML(data.member.name)}</strong></div>
-        <div class="receipt-line"><span>Kode Member</span><span>${escapeHTML(data.member.member_code || '-')}</span></div>
-        <div class="receipt-divider"></div>
-        <div class="receipt-line"><span>Paket Membership</span><strong>${escapeHTML(data.paket.nama_paket)}</strong></div>
-        <div class="receipt-line"><span>Masa Berlaku</span><span>${escapeHTML(data.tanggal_mulai)} s/d ${escapeHTML(data.tanggal_selesai)}</span></div>
-        <div class="receipt-divider"></div>
-        <div class="receipt-line"><span>Metode Bayar</span><span class="method-tag method-${escapeHTML(data.metode_pembayaran)}">${escapeHTML(data.metode_pembayaran)}</span></div>
-        <div class="receipt-line"><span>Harga Paket</span><span>${formatRupiah(data.paket.harga)}</span></div>
-        <div class="receipt-line"><span>Nominal Bayar</span><strong>${formatRupiah(data.jumlah_bayar)}</strong></div>
-        <div class="receipt-divider"></div>
-        <div class="receipt-line receipt-total"><span>Kembalian</span><span>${formatRupiah(data.kembalian)}</span></div>
-    `;
-
-    openModal(modalReceipt, btnPrintReceipt);
 }
 
 // Data Fetching
@@ -671,11 +608,7 @@ formAddTransaction?.addEventListener('submit', async (e) => {
 
         // Refresh list & summary
         await loadCashierData();
-
-        // Open Receipt Modal
-        if (res.data) {
-            openReceiptModal(res.data);
-        }
+        showToast('Transaksi pembayaran berhasil diproses!');
     } catch (err) {
         formMessage.textContent = err.message;
         formMessage.className = 'form-message error';

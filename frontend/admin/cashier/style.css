@@ -80,11 +80,16 @@
 }
 
 .table-wrap {
+    width: 100%;
     overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
 }
 
 .data-table {
+    width: 100%;
     min-width: 720px;
+    border-collapse: collapse;
 }
 
 .data-table th {
@@ -93,12 +98,15 @@
     border-bottom: 1px solid rgba(255, 255, 255, 0.09);
     color: #9ca3af;
     text-align: left;
+    font-size: 11px;
+    font-weight: 700;
 }
 
 .data-table td {
     padding: 13px 14px;
     border-top: 1px solid rgba(255, 255, 255, 0.06);
     color: #d1d5db;
+    font-size: 12px;
 }
 
 .data-table td b {
@@ -154,24 +162,6 @@
     background: rgba(130, 80, 240, 0.18);
     border: 1px solid rgba(130, 80, 240, 0.38);
     color: #c084fc;
-}
-
-.btn-icon-receipt {
-    padding: 6px 10px;
-    border: 1px solid rgba(255, 255, 255, 0.14);
-    border-radius: 8px;
-    background: rgba(255, 255, 255, 0.06);
-    color: #d1d5db;
-    font-size: 11px;
-    cursor: pointer;
-    transition: all 160ms ease;
-}
-
-.btn-icon-receipt:hover {
-    background: rgba(255, 255, 255, 0.14);
-    border-color: rgba(255, 255, 255, 0.25);
-    color: #fff;
-    transform: translateY(-1px);
 }
 
 /* Transaction Type Selector (Liquid Glass Pills) */
@@ -542,105 +532,47 @@
     color: #4ade80;
 }
 
-/* Receipt Modal Styles */
-.receipt-dialog {
-    max-width: 440px;
-}
-
-.receipt-body {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    padding: 16px;
-    border: 1px dashed rgba(255, 255, 255, 0.18);
-    border-radius: 14px;
-    background: rgba(15, 17, 24, 0.6);
-}
-
-.receipt-line {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 13px;
-    color: #9ca3af;
-}
-
-.receipt-line strong {
-    color: #fff;
-    font-weight: 600;
-}
-
-.receipt-divider {
-    height: 1px;
-    background: rgba(255, 255, 255, 0.1);
-    margin: 4px 0;
-}
-
-.receipt-total {
-    font-size: 15px;
-    font-weight: 700;
-    color: #ff9d4d;
-}
-
-@media print {
-    body * {
-        visibility: hidden !important;
+/* Responsive Toolbar & Controls (Tablet & Mobile) */
+@media (max-width: 960px) {
+    .panel-heading {
+        flex-direction: row;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 12px;
     }
 
-    #modalReceipt,
-    #modalReceipt * {
-        visibility: visible !important;
-    }
-
-    #modalReceipt {
-        position: absolute;
-        inset: 0;
-        background: #fff !important;
-        color: #000 !important;
-    }
-
-    #modalReceipt .modal-dialog {
-        border: 0;
-        box-shadow: none;
-        background: #fff !important;
-        color: #000 !important;
-        max-width: 100%;
-        transform: none !important;
-    }
-
-    #modalReceipt .receipt-body {
-        background: #fff !important;
-        color: #000 !important;
-        border: 1px dashed #000 !important;
-    }
-
-    #modalReceipt .receipt-line,
-    #modalReceipt .receipt-line strong,
-    #modalReceipt h2,
-    #modalReceipt p {
-        color: #000 !important;
-    }
-
-    .modal-actions,
-    .modal-close-btn {
-        display: none !important;
-    }
-}
-
-@media (max-width: 680px) {
     .toolbar {
         flex-wrap: wrap;
+        gap: 10px;
     }
 
     .search-input {
-        flex-basis: 100%;
+        flex: 1 1 220px;
     }
 
     .filter-select {
-        flex: 1;
+        flex: 1 1 150px;
+    }
+}
+
+@media (max-width: 600px) {
+    .panel-heading {
+        flex-direction: column;
+        align-items: flex-start;
     }
 
-    .primary-button {
+    .panel-heading .primary-button {
         width: 100%;
+    }
+
+    .search-input,
+    .filter-select,
+    .soft-button.demo-action {
+        width: 100%;
+        flex-basis: 100%;
+    }
+
+    .transaction-type-selector {
+        grid-template-columns: 1fr;
     }
 }

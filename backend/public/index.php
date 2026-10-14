@@ -13,17 +13,13 @@ header('Content-Type: application/json');
 
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../controllers/auth/AuthController.php';
-<<<<<<< HEAD
-require_once __DIR__ . '/../controller/admin/CashierController.php';
-require_once __DIR__ . '/../controller/admin/AttendanceController.php';
-=======
 require_once __DIR__ . '/../controllers/admin/AdminController.php';
 require_once __DIR__ . '/../controllers/admin/DashboardController.php';
 require_once __DIR__ . '/../controllers/admin/MemberController.php';
 require_once __DIR__ . '/../controllers/admin/PackageController.php';
 require_once __DIR__ . '/../controllers/admin/AttendanceController.php';
 require_once __DIR__ . '/../controllers/admin/TransactionController.php';
->>>>>>> origin/be/martino
+require_once __DIR__ . '/../controllers/admin/CashierController.php';
 
 $uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 $method = $_SERVER['REQUEST_METHOD'];
@@ -44,7 +40,6 @@ if (preg_match('#/api/login/?$#', $uri) && $method === 'POST') {
     exit;
 }
 
-<<<<<<< HEAD
 if (preg_match('#/api/admin/cashier/?$#', $uri) && $method === 'GET') {
     CashierController::initData();
     exit;
@@ -72,7 +67,9 @@ if (preg_match('#/api/admin/attendance/today/?$#', $uri) && $method === 'GET') {
 
 if (preg_match('#/api/admin/cashier/members/?$#', $uri) && $method === 'GET') {
     CashierController::searchMembers();
-=======
+    exit;
+}
+
 // 2. Admin Dashboard Route
 if (preg_match('#/api/admin/dashboard/?$#', $uri) && $method === 'GET') {
     DashboardController::index();
@@ -166,7 +163,6 @@ if (preg_match('#/api/admin/transactions/?$#', $uri)) {
 
 if (preg_match('#/api/admin/reports/?$#', $uri) && $method === 'GET') {
     TransactionController::reports();
->>>>>>> origin/be/martino
     exit;
 }
 

@@ -78,7 +78,10 @@
 }
 
 .table-wrap {
+    width: 100%;
     overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
 }
 
 .data-table {
@@ -188,21 +191,52 @@
     opacity: 1;
 }
 
-@media (max-width: 680px) {
+/* Responsive Toolbar & Controls (Tablet & Mobile) */
+@media (max-width: 960px) {
+    .panel-heading {
+        flex-direction: row;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 12px;
+    }
+
     .toolbar {
         flex-wrap: wrap;
+        gap: 10px;
     }
 
     .search-input {
-        flex-basis: 100%;
+        flex: 1 1 220px;
     }
 
     .filter-select {
-        flex: 1;
+        flex: 1 1 150px;
+    }
+}
+
+@media (max-width: 600px) {
+    .panel-heading {
+        flex-direction: column;
+        align-items: flex-start;
     }
 
-    .primary-button {
+    .panel-heading .primary-button {
         width: 100%;
+    }
+
+    .search-input,
+    .filter-select,
+    .soft-button.demo-action {
+        width: 100%;
+        flex-basis: 100%;
+    }
+
+    .modal-detail-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .modal-stat-cards {
+        grid-template-columns: 1fr;
     }
 }
 

@@ -41,14 +41,21 @@ $pageDate = date('d M Y');
             <symbol id="icon-printer" viewBox="0 0 24 24"><path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2M6 14h12v8H6z"/></symbol>
             <symbol id="icon-download" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4m-14-5 5 5 5-5m-5 5V3"/></symbol>
             <symbol id="icon-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4m0-4h.01"/></symbol>
+            <symbol id="icon-menu" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></symbol>
         </defs>
     </svg>
+    <div id="sidebarBackdrop" class="sidebar-backdrop" aria-hidden="true"></div>
     <div class="app-shell">
-        <aside class="sidebar">
-            <a class="brand" href="../dashboard/">
-                <svg class="icon brand-mark" aria-hidden="true" focusable="false"><use href="#icon-gym"/></svg>
-                <span>Kelola<span class="accent">Gym</span></span>
-            </a>
+        <aside class="sidebar" id="appSidebar">
+            <div class="sidebar-header">
+                <a class="brand" href="../dashboard/">
+                    <svg class="icon brand-mark" aria-hidden="true" focusable="false"><use href="#icon-gym"/></svg>
+                    <span>Kelola<span class="accent">Gym</span></span>
+                </a>
+                <button id="btnCloseSidebar" class="sidebar-close-btn" type="button" aria-label="Tutup Menu">
+                    <svg class="icon" aria-hidden="true" focusable="false"><use href="#icon-close"/></svg>
+                </button>
+            </div>
             <div class="sidebar-nav-wrap">
                 <p class="menu-label">MENU UTAMA</p>
                 <nav class="nav-list" aria-label="Menu utama">
@@ -58,28 +65,27 @@ $pageDate = date('d M Y');
                         </a>
                     <?php endforeach; ?>
                 </nav>
-                <p class="menu-label">PENGATURAN</p>
-                <nav class="nav-list" aria-label="Pengaturan">
-                    <a class="nav-item <?= ($page ?? '') === 'settings' ? 'active' : '' ?>" <?= ($page ?? '') === 'settings' ? 'aria-current="page"' : '' ?> href="../settings/">
-                        <svg class="icon" aria-hidden="true" focusable="false"><use href="#icon-settings"/></svg>Pengaturan
-                    </a>
-                </nav>
             </div>
             <button id="btnLogout" class="logout" type="button"><svg class="icon" aria-hidden="true" focusable="false"><use href="#icon-logout"/></svg>Keluar</button>
         </aside>
 
         <div class="main-wrapper">
             <header class="navbar topbar">
-                <div class="navbar-title-wrap">
-                    <p class="eyebrow"><?= strtoupper(htmlspecialchars($title ?? '')) ?> · <?= htmlspecialchars($pageDate) ?></p>
-                    <h1>
-                        <?php if (($page ?? '') === 'dashboard'): ?>
-                            Selamat pagi, <span id="userName">Admin</span>
-                        <?php else: ?>
-                            <?= htmlspecialchars($title ?? '') ?>
-                        <?php endif; ?>
-                    </h1>
-                    <p class="muted"><?= htmlspecialchars($pageSubtitle ?? (($page ?? '') === 'dashboard' ? 'Pantau operasional gym hari ini.' : 'Kelola informasi operasional gym.')) ?></p>
+                <div class="navbar-left">
+                    <button id="btnMenuToggle" class="menu-toggle-btn icon-button" type="button" aria-label="Menu Navigasi" aria-expanded="false" title="Menu Navigasi">
+                        <svg class="icon" aria-hidden="true" focusable="false"><use href="#icon-menu"/></svg>
+                    </button>
+                    <div class="navbar-title-wrap">
+                        <p class="eyebrow"><?= strtoupper(htmlspecialchars($title ?? '')) ?> · <?= htmlspecialchars($pageDate) ?></p>
+                        <h1>
+                            <?php if (($page ?? '') === 'dashboard'): ?>
+                                Selamat pagi, <span id="userName">Admin</span>
+                            <?php else: ?>
+                                <?= htmlspecialchars($title ?? '') ?>
+                            <?php endif; ?>
+                        </h1>
+                        <p class="muted"><?= htmlspecialchars($pageSubtitle ?? (($page ?? '') === 'dashboard' ? 'Pantau operasional gym hari ini.' : 'Kelola informasi operasional gym.')) ?></p>
+                    </div>
                 </div>
                 <div class="top-actions navbar-actions">
                     <button class="icon-button notification" type="button" aria-label="Notifikasi"><svg class="icon" aria-hidden="true" focusable="false"><use href="#icon-bell"/></svg><i aria-hidden="true"></i></button>
@@ -97,6 +103,61 @@ $pageDate = date('d M Y');
     </div>
 
     <div id="toast" class="toast" role="status"></div>
+    <script>
+    (function() {
+        const btnToggle = document.getElementById('btnMenuToggle');
+        const btnClose = document.getElementById('btnCloseSidebar');
+        const sidebar = document.getElementById('appSidebar');
+        const backdrop = document.getElementById('sidebarBackdrop');
+        const appShell = document.querySelector('.app-shell');
+
+        function openSidebar() {
+            if (!sidebar) return;
+            sidebar.classList.add('is-open');
+            if (backdrop) backdrop.classList.add('is-visible');
+            if (appShell) appShell.classList.add('sidebar-open');
+            if (btnToggle) btnToggle.setAttribute('aria-expanded', 'true');
+            document.body.classList.add('no-scroll-mobile');
+        }
+
+        function closeSidebar() {
+            if (!sidebar) return;
+            sidebar.classList.remove('is-open');
+            if (backdrop) backdrop.classList.remove('is-visible');
+            if (appShell) appShell.classList.remove('sidebar-open');
+            if (btnToggle) btnToggle.setAttribute('aria-expanded', 'false');
+            document.body.classList.remove('no-scroll-mobile');
+        }
+
+        function toggleSidebar() {
+            if (window.innerWidth > 1024) {
+                if (appShell) appShell.classList.toggle('sidebar-collapsed');
+            } else {
+                if (sidebar && sidebar.classList.contains('is-open')) {
+                    closeSidebar();
+                } else {
+                    openSidebar();
+                }
+            }
+        }
+
+        if (btnToggle) btnToggle.addEventListener('click', toggleSidebar);
+        if (btnClose) btnClose.addEventListener('click', closeSidebar);
+        if (backdrop) backdrop.addEventListener('click', closeSidebar);
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && sidebar && sidebar.classList.contains('is-open')) {
+                closeSidebar();
+            }
+        });
+
+        window.addEventListener('resize', function() {
+            if (window.innerWidth > 1024 && sidebar && sidebar.classList.contains('is-open')) {
+                closeSidebar();
+            }
+        });
+    })();
+    </script>
     <script src="script.js"></script>
 </body>
 </html>

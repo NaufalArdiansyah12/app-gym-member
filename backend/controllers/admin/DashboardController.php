@@ -13,7 +13,8 @@ class DashboardController {
         AdminController::autoExpireMembers($db);
 
         $stats = self::getStats($db);
-        $chart = self::getRevenueChart($db);
+        $period = $_GET['period'] ?? '7months';
+        $chart = self::getRevenueChart($db, $period);
         $recentCheckins = self::getRecentCheckins($db);
         $expiringMembers = self::getExpiringMembers($db);
 
@@ -24,6 +25,8 @@ class DashboardController {
                 'chart'            => $chart,
                 'recent_checkins'  => $recentCheckins,
                 'expiring_members' => $expiringMembers,
+                'server_time'      => date('H:i:s'),
+                'server_date'      => date('d M Y'),
             ],
         ]);
     }
@@ -65,7 +68,7 @@ class DashboardController {
             WHERE DATE(waktu_presensi) = CURDATE()
         ")->fetchColumn();
 
-        // Total Pendapatan & Pendapatan Bulan Ini
+        // Pendapatan Bulan Ini
         $monthRevenue = (float)$db->query("
             SELECT COALESCE(SUM(jumlah_bayar), 0) 
             FROM transaksi 
@@ -73,55 +76,101 @@ class DashboardController {
               AND YEAR(dibayar_pada) = YEAR(CURDATE())
         ")->fetchColumn();
 
+        // Pendapatan Bulan Lalu (untuk perhitungan growth)
+        $lastMonthRevenue = (float)$db->query("
+            SELECT COALESCE(SUM(jumlah_bayar), 0) 
+            FROM transaksi 
+            WHERE dibayar_pada >= DATE_FORMAT(CURRENT_DATE - INTERVAL 1 MONTH, '%Y-%m-01')
+              AND dibayar_pada < DATE_FORMAT(CURRENT_DATE, '%Y-%m-01')
+        ")->fetchColumn();
+
+        if ($lastMonthRevenue > 0) {
+            $diff = $monthRevenue - $lastMonthRevenue;
+            $growthPercent = round(($diff / $lastMonthRevenue) * 100, 1);
+            $growthPositive = $growthPercent >= 0;
+            $growthText = ($growthPositive ? '↗ +' : '↘ ') . $growthPercent . '% vs bln lalu';
+        } else if ($monthRevenue > 0) {
+            $growthPositive = true;
+            $growthText = '↗ +100% vs bln lalu';
+        } else {
+            $growthPositive = true;
+            $growthText = '0% vs bln lalu';
+        }
+
         $totalRevenue = (float)$db->query("
             SELECT COALESCE(SUM(jumlah_bayar), 0) 
             FROM transaksi
         ")->fetchColumn();
 
         return [
-            'total_members'    => $totalMembers,
-            'active_members'   => $activeMembers,
-            'expiring_members' => $expiringMembers,
-            'today_checkins'   => $todayCheckins,
-            'month_revenue'    => $monthRevenue,
-            'total_revenue'    => $totalRevenue,
+            'total_members'           => $totalMembers,
+            'active_members'          => $activeMembers,
+            'expiring_members'        => $expiringMembers,
+            'today_checkins'          => $todayCheckins,
+            'month_revenue'           => $monthRevenue,
+            'total_revenue'           => $totalRevenue,
             'month_revenue_formatted' => 'Rp ' . number_format($monthRevenue, 0, ',', '.'),
             'total_revenue_formatted' => 'Rp ' . number_format($totalRevenue, 0, ',', '.'),
+            'revenue_growth'          => $growthText,
+            'revenue_growth_positive' => $growthPositive,
         ];
     }
 
     /**
-     * Data grafik ringkasan pendapatan 7 bulan terakhir
+     * Data grafik ringkasan pendapatan (7 bulan terakhir atau 1 tahun penuh)
      */
-    public static function getRevenueChart(PDO $db): array {
+    public static function getRevenueChart(PDO $db, string $period = '7months'): array {
         $months = [];
         $indonesianMonths = [
             1 => 'Jan', 2 => 'Feb', 3 => 'Mar', 4 => 'Apr', 5 => 'Mei', 6 => 'Jun',
             7 => 'Jul', 8 => 'Agu', 9 => 'Sep', 10 => 'Okt', 11 => 'Nov', 12 => 'Des'
         ];
 
-        // Buat rentang 7 bulan ke belakang hingga bulan saat ini
-        for ($i = 6; $i >= 0; $i--) {
-            $time = strtotime("-{$i} month");
-            $m = (int)date('n', $time);
-            $y = (int)date('Y', $time);
-            $key = sprintf('%04d-%02d', $y, $m);
-            $months[$key] = [
-                'label'   => $indonesianMonths[$m],
-                'month'   => $m,
-                'year'    => $y,
-                'revenue' => 0.0,
-            ];
+        if ($period === 'year') {
+            $currentYear = (int)date('Y');
+            for ($m = 1; $m <= 12; $m++) {
+                $key = sprintf('%04d-%02d', $currentYear, $m);
+                $months[$key] = [
+                    'label'   => $indonesianMonths[$m],
+                    'month'   => $m,
+                    'year'    => $currentYear,
+                    'revenue' => 0.0,
+                ];
+            }
+
+            $stmt = $db->query("
+                SELECT 
+                    DATE_FORMAT(dibayar_pada, '%Y-%m') as periode, 
+                    SUM(jumlah_bayar) as total 
+                FROM transaksi 
+                WHERE YEAR(dibayar_pada) = YEAR(CURDATE())
+                GROUP BY DATE_FORMAT(dibayar_pada, '%Y-%m')
+            ");
+        } else {
+            // Rentang 7 bulan ke belakang hingga bulan saat ini
+            for ($i = 6; $i >= 0; $i--) {
+                $time = strtotime("-{$i} month");
+                $m = (int)date('n', $time);
+                $y = (int)date('Y', $time);
+                $key = sprintf('%04d-%02d', $y, $m);
+                $months[$key] = [
+                    'label'   => $indonesianMonths[$m],
+                    'month'   => $m,
+                    'year'    => $y,
+                    'revenue' => 0.0,
+                ];
+            }
+
+            $stmt = $db->query("
+                SELECT 
+                    DATE_FORMAT(dibayar_pada, '%Y-%m') as periode, 
+                    SUM(jumlah_bayar) as total 
+                FROM transaksi 
+                WHERE dibayar_pada >= DATE_SUB(CURDATE(), INTERVAL 7 MONTH)
+                GROUP BY DATE_FORMAT(dibayar_pada, '%Y-%m')
+            ");
         }
 
-        $stmt = $db->query("
-            SELECT 
-                DATE_FORMAT(dibayar_pada, '%Y-%m') as periode, 
-                SUM(jumlah_bayar) as total 
-            FROM transaksi 
-            WHERE dibayar_pada >= DATE_SUB(CURDATE(), INTERVAL 7 MONTH)
-            GROUP BY DATE_FORMAT(dibayar_pada, '%Y-%m')
-        ");
         $results = $stmt->fetchAll();
 
         foreach ($results as $row) {
@@ -132,13 +181,14 @@ class DashboardController {
 
         $labels = array_column($months, 'label');
         $series = array_column($months, 'revenue');
-        $sum7Months = array_sum($series);
+        $sumRevenue = array_sum($series);
 
         return [
-            'labels'           => $labels,
-            'series'           => $series,
-            'total_7_months'   => $sum7Months,
-            'total_formatted'  => 'Rp ' . number_format($sum7Months, 0, ',', '.'),
+            'period'          => $period,
+            'labels'          => $labels,
+            'series'          => $series,
+            'total_revenue'   => $sumRevenue,
+            'total_formatted' => 'Rp ' . number_format($sumRevenue, 0, ',', '.'),
         ];
     }
 
@@ -158,10 +208,13 @@ class DashboardController {
             FROM presensi p
             JOIN users u ON p.id_user = u.id
             LEFT JOIN (
-                SELECT id_user, id_paket 
-                FROM langganan 
-                WHERE status = 'aktif' 
-                ORDER BY id DESC
+                SELECT l1.id_user, l1.id_paket
+                FROM langganan l1
+                INNER JOIN (
+                    SELECT id_user, MAX(id) as max_id
+                    FROM langganan
+                    GROUP BY id_user
+                ) l2 ON l1.id = l2.max_id
             ) l ON l.id_user = u.id
             LEFT JOIN paket pk ON l.id_paket = pk.id
             WHERE DATE(p.waktu_presensi) = CURDATE()
@@ -213,9 +266,13 @@ class DashboardController {
                 COALESCE(pk.nama_paket, 'Paket Gym') as nama_paket
             FROM users u
             LEFT JOIN (
-                SELECT id_user, id_paket 
-                FROM langganan 
-                ORDER BY id DESC
+                SELECT l1.id_user, l1.id_paket
+                FROM langganan l1
+                INNER JOIN (
+                    SELECT id_user, MAX(id) as max_id
+                    FROM langganan
+                    GROUP BY id_user
+                ) l2 ON l1.id = l2.max_id
             ) l ON l.id_user = u.id
             LEFT JOIN paket pk ON l.id_paket = pk.id
             WHERE u.role = 'user'
@@ -223,7 +280,6 @@ class DashboardController {
               AND u.membership_expires_at IS NOT NULL
               AND u.membership_expires_at >= CURDATE()
               AND u.membership_expires_at <= DATE_ADD(CURDATE(), INTERVAL 7 DAY)
-            GROUP BY u.id
             ORDER BY u.membership_expires_at ASC
             LIMIT 10
         ");

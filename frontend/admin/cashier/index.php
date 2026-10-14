@@ -64,13 +64,12 @@ ob_start();
                     <th scope="col">PAKET</th>
                     <th scope="col">TANGGAL</th>
                     <th scope="col">METODE</th>
-                    <th scope="col">TOTAL</th>
-                    <th scope="col"><span class="visually-hidden">Aksi</span></th>
+                    <th scope="col" style="text-align: right;">TOTAL</th>
                 </tr>
             </thead>
             <tbody id="transactionRows">
                 <tr>
-                    <td colspan="7" class="empty-row">Memuat transaksi…</td>
+                    <td colspan="6" class="empty-row">Memuat transaksi…</td>
                 </tr>
             </tbody>
         </table>
@@ -185,28 +184,6 @@ ob_start();
                 <button id="btnSubmitTransaction" class="btn-submit" type="submit">Proses & Bayar</button>
             </div>
         </form>
-    </div>
-</div>
-
-<!-- Modal Liquid Glass: Struk Pembayaran -->
-<div id="modalReceipt" class="modal-overlay" aria-hidden="true">
-    <div class="modal-dialog receipt-dialog" role="dialog" aria-modal="true" aria-labelledby="receiptTitle">
-        <div class="modal-header">
-            <div>
-                <h2 id="receiptTitle">Struk Pembayaran</h2>
-                <p class="muted" id="receiptSubtitle">KelolaGym · Bukti Transaksi Resmi</p>
-            </div>
-            <button id="btnCloseReceipt" class="icon-button modal-close-btn" type="button" aria-label="Tutup struk">
-                <svg class="icon" aria-hidden="true" focusable="false"><use href="#icon-close"/></svg>
-            </button>
-        </div>
-
-        <div id="receiptContent" class="receipt-body"></div>
-
-        <div class="modal-actions receipt-actions">
-            <button id="btnPrintReceipt" class="soft-button" type="button"><svg class="icon icon-sm" aria-hidden="true" focusable="false"><use href="#icon-printer"/></svg> Cetak Struk</button>
-            <button id="btnDoneReceipt" class="btn-submit" type="button">Selesai</button>
-        </div>
     </div>
 </div>
 <?php
