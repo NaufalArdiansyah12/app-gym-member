@@ -4,7 +4,7 @@ require_once __DIR__ . '/config/database.php';
 require_once __DIR__ . '/controllers/auth/AuthController.php';
 require_once __DIR__ . '/controller/admin/CashierController.php';
 
-// Check Controller class
+// 1. AuthController Tests
 assert(class_exists('AuthController'), 'AuthController class not found');
 assert(method_exists('AuthController', 'login'), 'AuthController::login method not found');
 
@@ -22,6 +22,7 @@ $data = json_decode($output, true);
 
 assert(isset($data['error']), 'Empty login payload must return error message');
 assert(http_response_code() === 422, 'Empty login payload must return 422 status code');
+echo "✓ AuthController tests passed.\n";
 
 // Check CashierController validation
 ob_start();
