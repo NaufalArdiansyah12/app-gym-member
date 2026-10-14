@@ -1,0 +1,241 @@
+@import url('../dashboard/style.css');
+@import url('../members/style.css');
+
+.detail-container {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.top-navigation {
+    display: flex;
+    align-items: center;
+}
+
+.back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: #9ca3af;
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 500;
+    transition: color 180ms ease, transform 180ms ease;
+}
+
+.back-link:hover {
+    color: #ff7a1a;
+    transform: translateX(-2px);
+}
+
+.back-link svg {
+    transform: rotate(180deg);
+}
+
+/* Header Profil Card */
+.detail-header-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+    padding: 24px;
+}
+
+.detail-identity {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+}
+
+.large-avatar {
+    width: 64px;
+    height: 64px;
+    font-size: 24px;
+    font-weight: 800;
+    border-radius: 18px;
+}
+
+.identity-info .title-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.identity-info h2 {
+    font-size: 22px;
+    font-weight: 800;
+    color: #fff;
+    margin: 0;
+}
+
+.member-code-tag {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-weight: 600;
+    color: #ff9142;
+    letter-spacing: 0.5px;
+}
+
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.danger-button {
+    color: #f87171 !important;
+}
+
+.danger-button:hover {
+    background: rgba(239, 68, 68, 0.18) !important;
+    border-color: rgba(239, 68, 68, 0.3) !important;
+    color: #fca5a5 !important;
+}
+
+/* Grid Profil & Metrik */
+.detail-main-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 20px;
+}
+
+.info-panel {
+    padding: 22px;
+}
+
+.info-list {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    margin-top: 14px;
+}
+
+.info-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding-bottom: 12px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.info-item:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.info-label {
+    font-size: 13px;
+    color: #9ca3af;
+}
+
+.info-value {
+    font-size: 13px;
+    font-weight: 600;
+    color: #f3f4f6;
+    text-align: right;
+    max-width: 60%;
+    word-break: break-word;
+}
+
+.summary-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+    margin-top: 14px;
+}
+
+.summary-stat-box {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.summary-stat-box small {
+    font-size: 11px;
+    color: #9ca3af;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.summary-stat-box strong {
+    font-size: 17px;
+    font-weight: 700;
+    color: #ff9142;
+}
+
+/* History Tabs */
+.history-panel {
+    padding: 20px;
+}
+
+.history-tabs {
+    display: flex;
+    gap: 8px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    padding-bottom: 12px;
+    margin-bottom: 16px;
+    overflow-x: auto;
+}
+
+.tab-button {
+    background: transparent;
+    border: none;
+    color: #9ca3af;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 8px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 180ms ease;
+    white-space: nowrap;
+}
+
+.tab-button:hover {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.tab-button.active {
+    color: #ff7a1a;
+    background: rgba(255, 122, 26, 0.12);
+}
+
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+.table-empty {
+    text-align: center;
+    color: #9ca3af;
+    padding: 2.5rem 1rem !important;
+}
+
+/* Modal text area */
+.modal-form textarea {
+    width: 100%;
+    background: rgba(18, 20, 26, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 10px;
+    padding: 10px 14px;
+    color: #fff;
+    font: inherit;
+    resize: vertical;
+}
+
+.modal-form textarea:focus {
+    outline: none;
+    border-color: #ff7a1a;
+    box-shadow: 0 0 0 3px rgba(255, 122, 26, 0.25);
+}
+

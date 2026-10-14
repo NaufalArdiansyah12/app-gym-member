@@ -10,26 +10,26 @@ ob_start();
     <article class="stat-card">
         <div class="stat-icon orange" aria-hidden="true"><svg class="icon" focusable="false"><use href="#icon-members"/></svg></div>
         <p>Total Member</p>
-        <strong>1,248</strong>
-        <small class="positive">↗ 12.5% <em>dari bulan lalu</em></small>
+        <strong id="statTotalMembers">1,248</strong>
+        <small class="positive">Semua terdaftar</small>
     </article>
     <article class="stat-card">
         <div class="stat-icon green" aria-hidden="true"><svg class="icon" focusable="false"><use href="#icon-check"/></svg></div>
         <p>Member Aktif</p>
-        <strong>986</strong>
-        <small class="positive">↗ 8.2% <em>dari bulan lalu</em></small>
+        <strong id="statActiveMembers">986</strong>
+        <small class="positive">Membership berjalan</small>
     </article>
     <article class="stat-card">
         <div class="stat-icon yellow" aria-hidden="true"><svg class="icon" focusable="false"><use href="#icon-warning"/></svg></div>
         <p>Akan Berakhir</p>
-        <strong>42</strong>
+        <strong id="statExpiringMembers">42</strong>
         <small class="warning">Perlu perhatian ≤ 7 hari</small>
     </article>
     <article class="stat-card">
         <div class="stat-icon orange" aria-hidden="true"><svg class="icon" focusable="false"><use href="#icon-check-in"/></svg></div>
         <p>Check-in Hari Ini</p>
-        <strong>187</strong>
-        <small class="positive">↗ 5.4% <em>dari kemarin</em></small>
+        <strong id="statTodayCheckins">187</strong>
+        <small class="positive">Kedatangan hari ini</small>
     </article>
 </section>
 
@@ -85,7 +85,7 @@ ob_start();
             </div>
             <a href="../attendance/">Lihat semua</a>
         </div>
-        <div class="attendance-list">
+        <div class="attendance-list" id="attendanceList">
             <div class="attendance-row">
                 <div class="avatar peach" aria-hidden="true">AR</div>
                 <div>
@@ -133,7 +133,7 @@ ob_start();
                         <th scope="col">STATUS</th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody id="expiringTableBody">
                     <tr>
                         <td><b>Rizky Maulana</b><small>GYM-2188</small></td>
                         <td>1 Bulan</td>
@@ -194,22 +194,6 @@ ob_start();
                         <option value="pria">Pria</option>
                         <option value="wanita">Wanita</option>
                     </select>
-                </div>
-            </div>
-
-            <div class="form-row">
-                <div class="form-group">
-                    <label for="memberPackage">Pilihan Paket</label>
-                    <select id="memberPackage" name="id_paket" required>
-                        <option value="1">1 Bulan — Rp 150.000</option>
-                        <option value="2" selected>3 Bulan — Rp 400.000</option>
-                        <option value="3">6 Bulan — Rp 750.000</option>
-                        <option value="4">12 Bulan — Rp 1.300.000</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="memberStartDate">Tanggal Mulai</label>
-                    <input id="memberStartDate" name="tanggal_mulai" type="date" value="<?= date('Y-m-d') ?>" required>
                 </div>
             </div>
 
