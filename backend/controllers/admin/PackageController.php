@@ -29,6 +29,9 @@ class PackageController {
             $pkg['durasi_hari'] = (int)$pkg['durasi_hari'];
             $pkg['harga'] = (float)$pkg['harga'];
             $pkg['harga_formatted'] = 'Rp ' . number_format($pkg['harga'], 0, ',', '.');
+            $pkg['benefit'] = $pkg['benefit'] ?? '';
+            $benefitLines = array_filter(array_map('trim', explode("\n", str_replace("\r", "", $pkg['benefit']))), fn($b) => $b !== '');
+            $pkg['benefit_list'] = array_values($benefitLines);
             $pkg['tersedia'] = (bool)$pkg['tersedia'];
             $pkg['total_active_members'] = (int)$pkg['total_active_members'];
         }
@@ -59,6 +62,9 @@ class PackageController {
         $pkg['durasi_hari'] = (int)$pkg['durasi_hari'];
         $pkg['harga'] = (float)$pkg['harga'];
         $pkg['harga_formatted'] = 'Rp ' . number_format($pkg['harga'], 0, ',', '.');
+        $pkg['benefit'] = $pkg['benefit'] ?? '';
+        $benefitLines = array_filter(array_map('trim', explode("\n", str_replace("\r", "", $pkg['benefit']))), fn($b) => $b !== '');
+        $pkg['benefit_list'] = array_values($benefitLines);
         $pkg['tersedia'] = (bool)$pkg['tersedia'];
 
         AdminController::json([
@@ -79,6 +85,7 @@ class PackageController {
         $namaPaket = trim($input['nama_paket'] ?? '');
         $durasiHari = (int)($input['durasi_hari'] ?? 0);
         $harga = (float)($input['harga'] ?? 0);
+        $benefit = trim((string)($input['benefit'] ?? ''));
         $tersedia = isset($input['tersedia']) ? (int)(bool)$input['tersedia'] : 1;
 
         if ($namaPaket === '') {
@@ -92,10 +99,10 @@ class PackageController {
         }
 
         $stmt = $db->prepare("
-            INSERT INTO paket (nama_paket, durasi_hari, harga, tersedia) 
-            VALUES (?, ?, ?, ?)
+            INSERT INTO paket (nama_paket, durasi_hari, harga, benefit, tersedia) 
+            VALUES (?, ?, ?, ?, ?)
         ");
-        $stmt->execute([$namaPaket, $durasiHari, $harga, $tersedia]);
+        $stmt->execute([$namaPaket, $durasiHari, $harga, $benefit, $tersedia]);
         $newId = (int)$db->lastInsertId();
 
         AdminController::json([
@@ -106,6 +113,7 @@ class PackageController {
                 'nama_paket'  => $namaPaket,
                 'durasi_hari' => $durasiHari,
                 'harga'       => $harga,
+                'benefit'     => $benefit,
                 'tersedia'    => (bool)$tersedia,
             ],
         ], 201);
@@ -131,18 +139,37 @@ class PackageController {
         $namaPaket = trim($input['nama_paket'] ?? $pkg['nama_paket']);
         $durasiHari = isset($input['durasi_hari']) ? (int)$input['durasi_hari'] : (int)$pkg['durasi_hari'];
         $harga = isset($input['harga']) ? (float)$input['harga'] : (float)$pkg['harga'];
+        $benefit = isset($input['benefit']) ? trim((string)$input['benefit']) : ($pkg['benefit'] ?? '');
         $tersedia = isset($input['tersedia']) ? (int)(bool)$input['tersedia'] : (int)$pkg['tersedia'];
+
+        if ($namaPaket === '') {
+            AdminController::error('Nama paket tidak boleh kosong', 422);
+        }
+        if ($durasiHari <= 0) {
+            AdminController::error('Durasi hari harus lebih dari 0', 422);
+        }
+        if ($harga < 0) {
+            AdminController::error('Harga tidak boleh negatif', 422);
+        }
 
         $upStmt = $db->prepare("
             UPDATE paket 
-            SET nama_paket = ?, durasi_hari = ?, harga = ?, tersedia = ? 
+            SET nama_paket = ?, durasi_hari = ?, harga = ?, benefit = ?, tersedia = ? 
             WHERE id = ?
         ");
-        $upStmt->execute([$namaPaket, $durasiHari, $harga, $tersedia, $id]);
+        $upStmt->execute([$namaPaket, $durasiHari, $harga, $benefit, $tersedia, $id]);
 
         AdminController::json([
             'status'  => 'success',
             'message' => 'Paket berhasil diperbarui',
+            'data'    => [
+                'id'          => $id,
+                'nama_paket'  => $namaPaket,
+                'durasi_hari' => $durasiHari,
+                'harga'       => $harga,
+                'benefit'     => $benefit,
+                'tersedia'    => (bool)$tersedia,
+            ]
         ]);
     }
 

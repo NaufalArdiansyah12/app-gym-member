@@ -198,7 +198,13 @@ if (!rawUser) {
                 closeModal();
                 formAddMember.reset();
                 showToast(data.message || 'Member baru berhasil didaftarkan!');
-                loadDashboardData();
+                if (data.data && data.data.id) {
+                    setTimeout(() => {
+                        window.location.href = `../member-detail/?id=${data.data.id}`;
+                    }, 800);
+                } else {
+                    loadDashboardData();
+                }
             } catch (err) {
                 showToast('Gagal terhubung ke server backend.');
             } finally {

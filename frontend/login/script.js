@@ -7,20 +7,55 @@ const API_URL = window.location.port === '3000'
 const form = document.getElementById('loginForm');
 const btn = document.getElementById('btnSubmit');
 const alertBox = document.getElementById('alert');
+const emailInput = document.getElementById('email');
+const passwordInput = document.getElementById('password');
 
 const showAlert = (message, type = 'error') => {
     alertBox.textContent = message;
     alertBox.className = `alert alert-${type}`;
 };
 
+// Toggle intip kata sandi
+const btnToggle = document.getElementById('btnTogglePassword');
+if (btnToggle && passwordInput) {
+    btnToggle.addEventListener('click', () => {
+        const isPass = passwordInput.type === 'password';
+        passwordInput.type = isPass ? 'text' : 'password';
+        btnToggle.textContent = isPass ? 'Tutup' : 'Lihat';
+    });
+}
+
+// Tombol demo kredensial cepat
+const fillCredentials = (email, pass) => {
+    if (emailInput) emailInput.value = email;
+    if (passwordInput) passwordInput.value = pass;
+    alertBox.className = 'alert hidden';
+    if (passwordInput) passwordInput.focus();
+};
+
+document.getElementById('btnDemoAdmin')?.addEventListener('click', () => {
+    fillCredentials('admin@gym.com', 'admin123');
+});
+
+document.getElementById('btnDemoUser')?.addEventListener('click', () => {
+    fillCredentials('user@gym.com', 'user123');
+});
+
 form.addEventListener('submit', async (e) => {
     e.preventDefault();
     alertBox.className = 'alert hidden';
     btn.disabled = true;
-    btn.textContent = 'Memproses...';
+    btn.innerHTML = `<span>Memproses...</span>`;
 
-    const email = document.getElementById('email').value.trim();
-    const password = document.getElementById('password').value;
+    const email = emailInput ? emailInput.value.trim() : '';
+    const password = passwordInput ? passwordInput.value : '';
+
+    if (!email || !password) {
+        showAlert('Harap isi alamat email dan kata sandi.');
+        btn.disabled = false;
+        btn.innerHTML = `<span>Masuk Sekarang</span><svg class="btn-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m9 5 7 7-7 7"/></svg>`;
+        return;
+    }
 
     try {
         const res = await fetch(API_URL, {
@@ -36,7 +71,7 @@ form.addEventListener('submit', async (e) => {
             return;
         }
 
-        showAlert('Login berhasil! Mengalihkan...', 'success');
+        showAlert('Login berhasil! Mengalihkan ke dashboard...', 'success');
         localStorage.setItem('user', JSON.stringify(data.data));
 
         setTimeout(() => {
@@ -45,11 +80,11 @@ form.addEventListener('submit', async (e) => {
             } else {
                 window.location.href = '../user/dashboard/';
             }
-        }, 1000);
+        }, 800);
     } catch {
         showAlert('Tidak dapat terhubung ke server backend.');
     } finally {
         btn.disabled = false;
-        btn.textContent = 'Masuk';
+        btn.innerHTML = `<span>Masuk Sekarang</span><svg class="btn-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m9 5 7 7-7 7"/></svg>`;
     }
 });

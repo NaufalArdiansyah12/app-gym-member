@@ -20,6 +20,10 @@ require_once __DIR__ . '/../controllers/admin/PackageController.php';
 require_once __DIR__ . '/../controllers/admin/AttendanceController.php';
 require_once __DIR__ . '/../controllers/admin/TransactionController.php';
 require_once __DIR__ . '/../controllers/admin/CashierController.php';
+require_once __DIR__ . '/../controllers/user/UserController.php';
+require_once __DIR__ . '/../controllers/user/UserDashboardController.php';
+require_once __DIR__ . '/../controllers/user/UserAttendanceController.php';
+require_once __DIR__ . '/../controllers/user/UserMembershipController.php';
 
 $uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 $method = $_SERVER['REQUEST_METHOD'];
@@ -165,6 +169,35 @@ if (preg_match('#/api/admin/transactions/?$#', $uri)) {
 
 if (preg_match('#/api/admin/reports/?$#', $uri) && $method === 'GET') {
     TransactionController::reports();
+    exit;
+}
+
+// 8. User Dashboard Route
+if (preg_match('#/api/user/dashboard/?$#', $uri) && $method === 'GET') {
+    UserDashboardController::index();
+    exit;
+}
+
+// 9. User Attendance Routes
+if (preg_match('#/api/user/attendance/checkin/?$#', $uri) && $method === 'POST') {
+    UserAttendanceController::checkIn();
+    exit;
+}
+
+if (preg_match('#/api/user/attendance/?$#', $uri)) {
+    if ($method === 'GET') {
+        UserAttendanceController::index();
+        exit;
+    }
+    if ($method === 'POST') {
+        UserAttendanceController::checkIn();
+        exit;
+    }
+}
+
+// 10. User Membership Route
+if (preg_match('#/api/user/membership/?$#', $uri) && $method === 'GET') {
+    UserMembershipController::index();
     exit;
 }
 

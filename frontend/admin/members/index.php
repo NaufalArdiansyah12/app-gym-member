@@ -194,6 +194,14 @@ ob_start();
                     </div>
                 </div>
             </div>
+
+            <div class="modal-info-box modal-qr-box">
+                <h3 style="font-size: 11px; color: #9ca3af; text-transform: uppercase; margin: 0 0 10px; letter-spacing: 0.5px;">QR Code Presensi</h3>
+                <div class="modal-qr-container" style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 4px 0;">
+                    <div class="qr-canvas-holder" id="mdQrHolder"></div>
+                    <small class="muted" style="margin-top: 8px; font-size: 11px; text-align: center;">Scan untuk absensi kedatangan</small>
+                </div>
+            </div>
         </div>
 
         <!-- Bagian Riwayat Presensi Kehadiran Member -->

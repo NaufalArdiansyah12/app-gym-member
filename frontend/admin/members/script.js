@@ -63,6 +63,35 @@ function escapeHtml(str) {
         .replace(/'/g, '&#039;');
 }
 
+// ponytail: Render QR Code menggunakan lib lokal qrcodejs dengan fallback ke API gambar.
+function renderMemberQr(container, code, size = 120) {
+    if (!container || !code) return;
+    container.innerHTML = '';
+    if (typeof QRCode !== 'undefined') {
+        try {
+            new QRCode(container, {
+                text: code,
+                width: size,
+                height: size,
+                colorDark: '#0f172a',
+                colorLight: '#ffffff',
+                correctLevel: QRCode.CorrectLevel.M
+            });
+            return;
+        } catch { /* Fallback */ }
+    }
+    const img = document.createElement('img');
+    img.src = `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encodeURIComponent(code)}`;
+    img.alt = `QR Code ${code}`;
+    img.width = size;
+    img.height = size;
+    img.style.width = `${size}px`;
+    img.style.height = `${size}px`;
+    img.style.display = 'block';
+    img.style.borderRadius = '4px';
+    container.appendChild(img);
+}
+
 let activeDetailMember = null;
 
 // ==========================================
@@ -112,9 +141,15 @@ async function loadMembers() {
                         <td>${escapeHtml(m.created_at_formatted)}</td>
                         <td class="col-aksi">
                             <div class="action-buttons-wrap">
-                                <button class="icon-button btn-show-detail-trigger" type="button" data-id="${m.id}" title="Lihat profil member" style="font-size: 1rem; cursor: pointer;">👁️</button>
-                                <button class="icon-button btn-edit-member" type="button" data-id="${m.id}" title="Edit profil member" style="font-size: 1rem; cursor: pointer;">✎</button>
-                                <button class="icon-button btn-delete-member" type="button" data-id="${m.id}" data-name="${escapeHtml(m.name)}" title="Hapus member" style="font-size: 1.1rem; opacity: 0.75; cursor: pointer;">🗑</button>
+                                <button class="icon-button btn-show-detail-trigger" type="button" data-id="${m.id}" title="Lihat profil member">
+                                    <svg class="icon" aria-hidden="true" focusable="false"><use href="#icon-eye"/></svg>
+                                </button>
+                                <button class="icon-button btn-edit-member" type="button" data-id="${m.id}" title="Edit profil member">
+                                    <svg class="icon" aria-hidden="true" focusable="false"><use href="#icon-edit"/></svg>
+                                </button>
+                                <button class="icon-button btn-delete-member" type="button" data-id="${m.id}" data-name="${escapeHtml(m.name)}" title="Hapus member">
+                                    <svg class="icon" aria-hidden="true" focusable="false"><use href="#icon-trash"/></svg>
+                                </button>
                             </div>
                         </td>
                     </tr>
@@ -223,6 +258,9 @@ async function openDetailModal(id) {
         document.getElementById('mdInfoJoined').textContent = member.created_at_formatted || '-';
         document.getElementById('mdTotalCheckins').textContent = `${Number(stats.total_checkins || 0).toLocaleString('id-ID')} kali`;
         document.getElementById('mdLastCheckin').textContent = stats.last_checkin || 'Belum pernah';
+
+        // Render QR Code Member untuk Presensi
+        renderMemberQr(document.getElementById('mdQrHolder'), member.member_code, 120);
 
         // Riwayat Presensi
         document.getElementById('mdCountAtt').textContent = Array.isArray(attendances) ? attendances.length : 0;
@@ -438,6 +476,9 @@ formAddMember?.addEventListener('submit', async (e) => {
         formAddMember.reset();
         showToast(data.message || 'Member baru berhasil didaftarkan!');
         loadMembers();
+        if (data.data && data.data.id) {
+            openDetailModal(data.data.id);
+        }
     } catch {
         showToast('Gagal terhubung ke server backend.');
     } finally {

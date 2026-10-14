@@ -32,8 +32,14 @@ ob_start();
         <div class="header-actions">
             <button id="btnOpenRenew" class="primary-button" type="button">＋ Perpanjang Paket</button>
             <button id="btnQuickCheckin" class="soft-button" type="button">✓ Check-in Cepat</button>
-            <button id="btnOpenEdit" class="soft-button" type="button">✎ Edit Profil</button>
-            <button id="btnDeleteMember" class="soft-button danger-button" type="button">🗑 Hapus</button>
+            <button id="btnOpenEdit" class="soft-button" type="button">
+                <svg class="icon" aria-hidden="true" focusable="false" style="width: 14px; height: 14px; display: inline-block; vertical-align: -2px; margin-right: 4px;"><use href="#icon-edit"/></svg>
+                Edit Profil
+            </button>
+            <button id="btnDeleteMember" class="soft-button danger-button" type="button">
+                <svg class="icon" aria-hidden="true" focusable="false" style="width: 14px; height: 14px; display: inline-block; vertical-align: -2px; margin-right: 4px;"><use href="#icon-trash"/></svg>
+                Hapus
+            </button>
         </div>
     </section>
 
@@ -95,6 +101,27 @@ ob_start();
                 <div class="summary-stat-box">
                     <small>Total Transaksi Pembayaran</small>
                     <strong id="detailTotalSpent">Rp 0</strong>
+                </div>
+            </div>
+        </article>
+
+        <!-- Kolom QR Code Presensi -->
+        <article class="panel info-panel qr-detail-panel">
+            <div class="panel-heading">
+                <div>
+                    <h2>QR Code Presensi</h2>
+                    <p class="muted">Kode digital absensi kehadiran member</p>
+                </div>
+                <button id="btnPrintMemberQr" class="soft-button" type="button" title="Cetak Kartu Member">
+                    <svg class="icon" aria-hidden="true" focusable="false" style="width: 14px; height: 14px; display: inline-block; vertical-align: -2px; margin-right: 4px;"><use href="#icon-printer"/></svg>
+                    Cetak QR
+                </button>
+            </div>
+            <div class="detail-qr-container">
+                <div class="qr-canvas-holder" id="detailMemberQr"></div>
+                <div class="detail-qr-info">
+                    <strong class="member-code-tag" id="detailMemberQrCode" style="font-size: 16px;">GYM-...</strong>
+                    <p class="muted" style="margin: 6px 0 0; font-size: 12px;">Gunakan QR ini untuk scanner absensi kehadiran.</p>
                 </div>
             </div>
         </article>

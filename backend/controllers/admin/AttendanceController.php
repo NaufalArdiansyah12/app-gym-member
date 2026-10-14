@@ -139,6 +139,25 @@ class AttendanceController {
             $alertMessage = "Pemberitahuan: Masa aktif member {$user['name']} akan berakhir pada {$expiresAt}.";
         }
 
+        // Cek apakah member sudah presensi hari ini
+        $chkExisting = $db->prepare('SELECT id, waktu_presensi FROM presensi WHERE id_user = ? AND DATE(waktu_presensi) = CURRENT_DATE ORDER BY waktu_presensi DESC LIMIT 1');
+        $chkExisting->execute([$user['id']]);
+        $already = $chkExisting->fetch();
+        if ($already) {
+            AdminController::json([
+                'status'  => 'already_checked_in',
+                'message' => "Member {$user['name']} sudah melakukan presensi hari ini pada {$already['waktu_presensi']}",
+                'data'    => [
+                    'id'             => (int)$already['id'],
+                    'user_id'        => (int)$user['id'],
+                    'member_code'    => $user['member_code'],
+                    'name'           => $user['name'],
+                    'waktu_presensi' => $already['waktu_presensi'],
+                    'status'         => $user['membership_status'],
+                ],
+            ], 409);
+        }
+
         // Simpan presensi
         $insStmt = $db->prepare("INSERT INTO presensi (id_user, waktu_presensi) VALUES (?, NOW())");
         $insStmt->execute([$user['id']]);
@@ -189,6 +208,28 @@ class AttendanceController {
             return;
         }
 
+        // Cek apakah member sudah presensi hari ini
+        $checkToday = $db->prepare('SELECT id, waktu_presensi FROM presensi WHERE id_user = ? AND DATE(waktu_presensi) = CURRENT_DATE ORDER BY waktu_presensi DESC LIMIT 1');
+        $checkToday->execute([$member['id']]);
+        $existing = $checkToday->fetch();
+
+        if ($existing) {
+            http_response_code(409);
+            echo json_encode([
+                'status' => 'already_checked_in',
+                'error' => 'Member sudah melakukan presensi hari ini',
+                'data' => [
+                    'id' => (int) $existing['id'],
+                    'member_code' => $member['member_code'],
+                    'name' => $member['name'],
+                    'membership_status' => $member['membership_status'],
+                    'membership_expires_at' => $member['membership_expires_at'],
+                    'waktu_presensi' => $existing['waktu_presensi'],
+                ],
+            ]);
+            return;
+        }
+
         $insert = $db->prepare('INSERT INTO presensi (id_user, waktu_presensi) VALUES (?, NOW())');
         $insert->execute([$member['id']]);
         $attendanceId = (int) $db->lastInsertId();
@@ -200,6 +241,8 @@ class AttendanceController {
                 'id' => $attendanceId,
                 'member_code' => $member['member_code'],
                 'name' => $member['name'],
+                'membership_status' => $member['membership_status'],
+                'membership_expires_at' => $member['membership_expires_at'],
                 'waktu_presensi' => date('Y-m-d H:i:s'),
             ],
         ]);

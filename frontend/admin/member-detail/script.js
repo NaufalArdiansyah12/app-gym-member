@@ -68,6 +68,35 @@ function escapeHtml(str) {
         .replace(/'/g, '&#039;');
 }
 
+// ponytail: Render QR Code menggunakan lib lokal qrcodejs dengan fallback ke API gambar.
+function renderMemberQr(container, code, size = 150) {
+    if (!container || !code) return;
+    container.innerHTML = '';
+    if (typeof QRCode !== 'undefined') {
+        try {
+            new QRCode(container, {
+                text: code,
+                width: size,
+                height: size,
+                colorDark: '#0f172a',
+                colorLight: '#ffffff',
+                correctLevel: QRCode.CorrectLevel.M
+            });
+            return;
+        } catch { /* Fallback */ }
+    }
+    const img = document.createElement('img');
+    img.src = `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encodeURIComponent(code)}`;
+    img.alt = `QR Code ${code}`;
+    img.width = size;
+    img.height = size;
+    img.style.width = `${size}px`;
+    img.style.height = `${size}px`;
+    img.style.display = 'block';
+    img.style.borderRadius = '4px';
+    container.appendChild(img);
+}
+
 let currentMemberData = null;
 
 // Muat data detail member
@@ -115,6 +144,11 @@ async function loadMemberDetail() {
         document.getElementById('detailExpiresAt').textContent = member.expires_at_formatted || 'Belum diatur';
         document.getElementById('detailTotalCheckins').textContent = Number(stats.total_checkins || 0).toLocaleString('id-ID');
         document.getElementById('detailTotalSpent').textContent = stats.total_spent_formatted || 'Rp 0';
+
+        // 3b. Render QR Code Absensi
+        renderMemberQr(document.getElementById('detailMemberQr'), member.member_code, 150);
+        const qrCodeEl = document.getElementById('detailMemberQrCode');
+        if (qrCodeEl) qrCodeEl.textContent = member.member_code;
 
         // 4. Tab Counters
         document.getElementById('countSubscriptions').textContent = subscriptions.length;
@@ -226,6 +260,11 @@ document.getElementById('btnQuickCheckin')?.addEventListener('click', async () =
     } catch {
         showToast('Gagal terhubung ke server');
     }
+});
+
+// Tombol Cetak / Simpan QR Code
+document.getElementById('btnPrintMemberQr')?.addEventListener('click', () => {
+    window.print();
 });
 
 // Modal Perpanjang Paket (Renew)

@@ -239,3 +239,84 @@
     box-shadow: 0 0 0 3px rgba(255, 122, 26, 0.25);
 }
 
+/* QR Code Presensi Panel */
+.qr-detail-panel .detail-qr-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 18px 12px;
+    gap: 14px;
+}
+
+.qr-canvas-holder {
+    background: #ffffff;
+    padding: 12px;
+    border-radius: 14px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    width: 174px;
+    height: 174px;
+    aspect-ratio: 1 / 1;
+    box-sizing: border-box;
+    margin: 0 auto;
+}
+
+.qr-canvas-holder canvas,
+.qr-canvas-holder img {
+    display: block;
+    width: 150px !important;
+    height: 150px !important;
+    aspect-ratio: 1 / 1;
+    object-fit: contain;
+    border-radius: 4px;
+}
+
+.qr-canvas-holder img[style*="none"],
+.qr-canvas-holder canvas[style*="none"],
+.qr-canvas-holder [hidden] {
+    display: none !important;
+}
+
+.detail-qr-info {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+
+@media print {
+    body * {
+        visibility: hidden !important;
+    }
+    .qr-detail-panel,
+    .qr-detail-panel * {
+        visibility: visible !important;
+    }
+    .qr-detail-panel {
+        position: fixed;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        width: 320px;
+        background: #ffffff !important;
+        color: #000000 !important;
+        border: 2px solid #000000 !important;
+        border-radius: 12px;
+        padding: 24px !important;
+        box-shadow: none !important;
+    }
+    .qr-detail-panel button {
+        display: none !important;
+    }
+    .qr-detail-panel .muted {
+        color: #333333 !important;
+    }
+    .qr-detail-panel .member-code-tag {
+        color: #000000 !important;
+        font-size: 20px !important;
+    }
+}
+
