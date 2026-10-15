@@ -586,8 +586,8 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 
     .bottom-nav-inner {
         pointer-events: auto;
-        width: 250px;
-        max-width: 90vw;
+        width: 300px;
+        max-width: 92vw;
         margin: 0 auto;
         height: 62px;
         border-radius: 34px;

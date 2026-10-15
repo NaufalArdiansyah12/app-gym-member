@@ -13,7 +13,8 @@ class DashboardController {
         AdminController::autoExpireMembers($db);
 
         $stats = self::getStats($db);
-        $chart = self::getRevenueChart($db);
+        $revenueChart = self::getRevenueChart($db);
+        $memberChart = self::getMemberChart($db);
         $recentCheckins = self::getRecentCheckins($db);
         $expiringMembers = self::getExpiringMembers($db);
 
@@ -21,7 +22,9 @@ class DashboardController {
             'status' => 'success',
             'data'   => [
                 'stats'            => $stats,
-                'chart'            => $chart,
+                'chart'            => $memberChart,
+                'member_chart'     => $memberChart,
+                'revenue_chart'    => $revenueChart,
                 'recent_checkins'  => $recentCheckins,
                 'expiring_members' => $expiringMembers,
             ],
@@ -139,6 +142,58 @@ class DashboardController {
             'series'           => $series,
             'total_7_months'   => $sum7Months,
             'total_formatted'  => 'Rp ' . number_format($sum7Months, 0, ',', '.'),
+        ];
+    }
+
+    /**
+     * Data grafik ringkasan pendaftaran member baru 7 bulan terakhir
+     */
+    public static function getMemberChart(PDO $db): array {
+        $months = [];
+        $indonesianMonths = [
+            1 => 'Jan', 2 => 'Feb', 3 => 'Mar', 4 => 'Apr', 5 => 'Mei', 6 => 'Jun',
+            7 => 'Jul', 8 => 'Agu', 9 => 'Sep', 10 => 'Okt', 11 => 'Nov', 12 => 'Des'
+        ];
+
+        for ($i = 6; $i >= 0; $i--) {
+            $time = strtotime("-{$i} month");
+            $m = (int)date('n', $time);
+            $y = (int)date('Y', $time);
+            $key = sprintf('%04d-%02d', $y, $m);
+            $months[$key] = [
+                'label' => $indonesianMonths[$m],
+                'month' => $m,
+                'year'  => $y,
+                'count' => 0,
+            ];
+        }
+
+        $stmt = $db->query("
+            SELECT 
+                DATE_FORMAT(created_at, '%Y-%m') as periode, 
+                COUNT(*) as total 
+            FROM users 
+            WHERE role = 'user' 
+              AND created_at >= DATE_SUB(CURDATE(), INTERVAL 7 MONTH)
+            GROUP BY DATE_FORMAT(created_at, '%Y-%m')
+        ");
+        $results = $stmt->fetchAll();
+
+        foreach ($results as $row) {
+            if (isset($months[$row['periode']])) {
+                $months[$row['periode']]['count'] = (int)$row['total'];
+            }
+        }
+
+        $labels = array_column($months, 'label');
+        $series = array_column($months, 'count');
+        $sum7Months = array_sum($series);
+
+        return [
+            'labels'          => $labels,
+            'series'          => $series,
+            'total_7_months'  => $sum7Months,
+            'total_formatted' => number_format($sum7Months, 0, ',', '.') . ' Member',
         ];
     }
 

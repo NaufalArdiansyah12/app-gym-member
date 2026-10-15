@@ -565,11 +565,40 @@ select:focus-visible {
     filter: drop-shadow(0 0 4px rgba(255, 122, 26, 0.35));
 }
 
-.chart-points circle {
-    fill: #ff7a1a;
-    stroke: #ffffff;
-    stroke-width: 2;
-    filter: drop-shadow(0 2px 5px rgba(255, 122, 26, 0.7));
+.chart-tooltip {
+    position: absolute;
+    pointer-events: none;
+    padding: 6px 12px;
+    background: rgba(18, 20, 28, 0.94);
+    border: 1px solid rgba(255, 122, 26, 0.45);
+    border-radius: 8px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5), 0 0 14px rgba(255, 122, 26, 0.25);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    color: #f9fafb;
+    white-space: nowrap;
+    opacity: 0;
+    transform: translate(-50%, -100%) translateY(-10px);
+    transition: opacity 120ms ease, transform 120ms ease;
+    z-index: 30;
+}
+
+.chart-tooltip.is-active {
+    opacity: 1;
+    transform: translate(-50%, -100%) translateY(-14px);
+}
+
+.chart-tooltip .tooltip-month {
+    color: #9ca3af;
+    font-size: 11px;
+    margin-bottom: 2px;
+    letter-spacing: 0.5px;
+}
+
+.chart-tooltip .tooltip-value {
+    font-weight: 700;
+    font-size: 14px;
+    color: #ff7a1a;
 }
 
 .chart-labels {
@@ -581,6 +610,20 @@ select:focus-visible {
     justify-content: space-between;
     color: #b8beca;
     font-size: 12px;
+}
+
+.chart-labels span {
+    cursor: pointer;
+    padding: 2px 6px;
+    border-radius: 4px;
+    transition: color 150ms ease, background 150ms ease;
+}
+
+.chart-labels span:hover,
+.chart-labels span.is-active {
+    color: #ff7a1a;
+    font-weight: 700;
+    background: rgba(255, 122, 26, 0.12);
 }
 
 .attendance-list {

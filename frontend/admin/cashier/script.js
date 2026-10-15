@@ -40,10 +40,6 @@ const btnCloseModal = document.getElementById('btnCloseModal');
 const btnCancelModal = document.getElementById('btnCancelModal');
 const formAddTransaction = document.getElementById('formAddTransaction');
 
-const labelTypeBaru = document.getElementById('labelTypeBaru');
-const labelTypePerpanjang = document.getElementById('labelTypePerpanjang');
-const radioTypeBaru = labelTypeBaru?.querySelector('input');
-const radioTypePerpanjang = labelTypePerpanjang?.querySelector('input');
 const summaryTypeLabel = document.getElementById('summaryTypeLabel');
 const previewPeriod = document.getElementById('previewPeriod');
 
@@ -142,6 +138,7 @@ btnOpenAddTransaction?.addEventListener('click', () => {
     selectedUserId.value = '';
     memberSearchInput.value = '';
     selectPackage(null);
+    if (summaryTypeLabel) summaryTypeLabel.textContent = 'Perpanjang Paket';
     if (memberSearchResults) memberSearchResults.hidden = true;
     updateMemberDetails();
     openModal(modalAddTransaction, memberSearchInput);
@@ -260,34 +257,15 @@ document.addEventListener('click', (e) => {
     }
 });
 
-// Transaction Type Selection
+// Transaction Type: Kasir Khusus Perpanjang Paket
 function getSelectedTransactionType() {
-    return radioTypePerpanjang?.checked ? 'perpanjang' : 'baru';
+    return 'perpanjang';
 }
-
-function setTransactionType(type) {
-    if (type === 'perpanjang') {
-        if (radioTypePerpanjang) radioTypePerpanjang.checked = true;
-        labelTypePerpanjang?.classList.add('is-active');
-        labelTypeBaru?.classList.remove('is-active');
-        if (summaryTypeLabel) summaryTypeLabel.textContent = 'Perpanjang Paket';
-    } else {
-        if (radioTypeBaru) radioTypeBaru.checked = true;
-        labelTypeBaru?.classList.add('is-active');
-        labelTypePerpanjang?.classList.remove('is-active');
-        if (summaryTypeLabel) summaryTypeLabel.textContent = 'Beli Paket Baru';
-    }
-    updateEstimatedPeriod();
-}
-
-labelTypeBaru?.addEventListener('click', () => setTransactionType('baru'));
-labelTypePerpanjang?.addEventListener('click', () => setTransactionType('perpanjang'));
 
 // Estimated Period Calculation
 function updateEstimatedPeriod() {
     const selectedMember = members.find((m) => String(m.id) === selectedUserId.value);
     const selectedPkg = packages.find((p) => String(p.id) === packageSelect.value);
-    const type = getSelectedTransactionType();
     const today = getTodayString();
 
     if (!selectedPkg) {
@@ -298,7 +276,7 @@ function updateEstimatedPeriod() {
     const duration = Number(selectedPkg.durasi_hari) || 0;
     let startDate = today;
 
-    if (type === 'perpanjang' && selectedMember?.membership_expires_at && selectedMember.membership_expires_at >= today) {
+    if (selectedMember?.membership_expires_at && selectedMember.membership_expires_at >= today) {
         startDate = addDaysToDate(selectedMember.membership_expires_at, 1);
     }
 
@@ -404,21 +382,14 @@ function updateMemberDetails() {
     const today = getTodayString();
     const hasActivePlan = selected.membership_status === 'active' && selected.membership_expires_at && selected.membership_expires_at >= today;
 
-    // Otomatis arahkan ke perpanjang jika member masih aktif, atau beli baru jika expired/baru
-    if (hasActivePlan) {
-        setTransactionType('perpanjang');
-    } else {
-        setTransactionType('baru');
-    }
-
     const expiryText = selected.membership_expires_at
         ? `Masa aktif s/d: <strong>${escapeHTML(selected.membership_expires_at)}</strong>`
         : 'Belum ada membership aktif';
 
     const infoIcon = '<svg class="icon icon-inline" style="display:inline-block; vertical-align:-2px; width:14px; height:14px; margin-right:4px;"><use href="#icon-info"/></svg>';
     const recommendation = hasActivePlan
-        ? `${infoIcon}Member aktif: Pilihan <strong>Perpanjang Paket</strong> otomatis melanjutkan tanggal aktif tanpa potong sisa hari.`
-        : `${infoIcon}Member baru / expired: Paket akan aktif mulai hari ini.`;
+        ? `${infoIcon}Member aktif: Perpanjangan otomatis menyambung mulai <strong>${escapeHTML(addDaysToDate(selected.membership_expires_at, 1))}</strong> tanpa memotong sisa hari.`
+        : `${infoIcon}Member non-aktif/kedaluwarsa: Masa perpanjangan paket akan mulai dihitung dari hari ini.`;
 
     memberInfo.hidden = false;
     memberInfo.innerHTML = `
@@ -643,7 +614,7 @@ formAddTransaction?.addEventListener('submit', async (e) => {
     }
 
     btnSubmitTransaction.disabled = true;
-    btnSubmitTransaction.textContent = 'Memproses Transaksi…';
+    btnSubmitTransaction.textContent = 'Memproses Perpanjangan…';
     formMessage.textContent = '';
     formMessage.className = 'form-message';
 
@@ -654,7 +625,7 @@ formAddTransaction?.addEventListener('submit', async (e) => {
             body: JSON.stringify({
                 user_id: userId,
                 paket_id: Number(packageSelect.value),
-                tipe_transaksi: type,
+                tipe_transaksi: 'perpanjang',
                 metode_pembayaran: paymentMethod.value,
                 jumlah_bayar: amount,
             }),
@@ -665,7 +636,7 @@ formAddTransaction?.addEventListener('submit', async (e) => {
         selectedUserId.value = '';
         memberSearchInput.value = '';
         selectPackage(null);
-        setTransactionType('baru');
+        if (summaryTypeLabel) summaryTypeLabel.textContent = 'Perpanjang Paket';
         updateMemberDetails();
         updatePackageDetails();
 
@@ -681,7 +652,7 @@ formAddTransaction?.addEventListener('submit', async (e) => {
         formMessage.className = 'form-message error';
     } finally {
         btnSubmitTransaction.disabled = false;
-        btnSubmitTransaction.textContent = 'Proses & Bayar';
+        btnSubmitTransaction.textContent = 'Proses Perpanjangan';
     }
 });
 

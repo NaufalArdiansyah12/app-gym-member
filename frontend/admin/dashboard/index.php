@@ -4,6 +4,49 @@ $page = 'dashboard';
 $title = 'Dashboard';
 $pageSubtitle = 'Pantau operasional gym hari ini.';
 
+$chartLabels = ['Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt'];
+$chartSeries = [0, 0, 0, 0, 0, 0, 0];
+$chartTotalFormatted = '0 Member';
+
+try {
+    require_once __DIR__ . '/../../../backend/config/database.php';
+    require_once __DIR__ . '/../../../backend/controllers/admin/DashboardController.php';
+    $db = getDB();
+    $memberChartData = DashboardController::getMemberChart($db);
+    $chartLabels = $memberChartData['labels'] ?? $chartLabels;
+    $chartSeries = $memberChartData['series'] ?? $chartSeries;
+    $chartTotalFormatted = $memberChartData['total_formatted'] ?? '0 Member';
+} catch (\Throwable $e) {
+    // ponytail: Fallback gracefully jika koneksi DB offline saat SSR.
+}
+
+$svgWidth = 700;
+$svgHeight = 220;
+$bottomPad = 195;
+$usableH = 165;
+$maxVal = max(!empty($chartSeries) ? max($chartSeries) : 1, 1);
+$count = count($chartSeries);
+
+$initPoints = [];
+foreach ($chartSeries as $idx => $val) {
+    $x = $count > 1 ? round(($idx / ($count - 1)) * $svgWidth) : round($svgWidth / 2);
+    $y = round($bottomPad - ($val / $maxVal) * $usableH);
+    $initPoints[] = ['x' => $x, 'y' => $y, 'val' => (int)$val, 'label' => $chartLabels[$idx] ?? ''];
+}
+
+$initPathD = '';
+$initAreaD = '';
+if (!empty($initPoints)) {
+    $initPathD = "M {$initPoints[0]['x']} {$initPoints[0]['y']}";
+    for ($i = 1; $i < count($initPoints); $i++) {
+        $prev = $initPoints[$i - 1];
+        $curr = $initPoints[$i];
+        $cX = round($prev['x'] + ($curr['x'] - $prev['x']) / 2);
+        $initPathD .= " C {$cX} {$prev['y']} {$cX} {$curr['y']} {$curr['x']} {$curr['y']}";
+    }
+    $initAreaD = "{$initPathD} L {$svgWidth} {$svgHeight} L 0 {$svgHeight} Z";
+}
+
 ob_start();
 ?>
 <section class="stats-grid" aria-label="Ringkasan gym">
@@ -37,42 +80,41 @@ ob_start();
     <article class="panel chart-panel">
         <div class="panel-heading">
             <div>
-                <h2>Pendapatan</h2>
-                <p class="muted">Ringkasan pendapatan tahun 2026</p>
+                <h2 id="chartHeading">Pendaftaran Member</h2>
+                <p class="muted" id="chartSubheading">Tren member baru 7 bulan terakhir</p>
             </div>
-            <label class="visually-hidden" for="revenuePeriod">Periode pendapatan</label>
-            <select id="revenuePeriod">
-                <option>7 bulan terakhir</option>
-                <option>Tahun ini</option>
+            <label class="visually-hidden" for="chartMetricSelect">Pilihan grafik</label>
+            <select id="chartMetricSelect">
+                <option value="member" selected>Pendaftaran Member</option>
+                <option value="revenue">Pendapatan</option>
             </select>
         </div>
         <div class="chart-summary">
-            <strong>Rp 48.560.000</strong>
-            <span class="positive">↗ 14.8%</span>
+            <strong id="chartSummaryValue"><?= htmlspecialchars($chartTotalFormatted) ?></strong>
+            <span class="positive" id="chartSummaryBadge">7 bulan terakhir</span>
         </div>
-        <div class="chart">
+        <div class="chart" id="dashboardChartContainer" data-init='<?= htmlspecialchars(json_encode($initPoints), ENT_QUOTES, 'UTF-8') ?>'>
             <div class="grid-lines" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
-            <svg viewBox="0 0 700 220" preserveAspectRatio="none" role="img" aria-label="Grafik pendapatan">
+            <div class="chart-tooltip" id="chartTooltip" role="tooltip" aria-hidden="true">
+                <div class="tooltip-month" id="tooltipMonth"></div>
+                <div class="tooltip-value" id="tooltipValue"></div>
+            </div>
+            <svg id="dashboardChartSvg" viewBox="0 0 700 220" preserveAspectRatio="none" role="img" aria-label="Grafik data dashboard">
                 <defs>
                     <linearGradient id="fill" x1="0" x2="0" y1="0" y2="1">
                         <stop offset="0" stop-color="#ff7a1a" stop-opacity=".4" />
                         <stop offset="1" stop-color="#ff7a1a" stop-opacity="0" />
                     </linearGradient>
                 </defs>
-                <path class="area" d="M0 180 C55 155 70 170 110 135 S180 150 220 105 S290 130 335 85 S400 112 450 65 S510 95 560 45 S625 70 700 18 L700 220 L0 220Z" />
-                <path class="line" d="M0 180 C55 155 70 170 110 135 S180 150 220 105 S290 130 335 85 S400 112 450 65 S510 95 560 45 S625 70 700 18" />
-                <g class="chart-points" aria-hidden="true">
-                    <circle cx="110" cy="135" r="3.5" />
-                    <circle cx="220" cy="105" r="3.5" />
-                    <circle cx="335" cy="85" r="3.5" />
-                    <circle cx="450" cy="65" r="3.5" />
-                    <circle cx="560" cy="45" r="3.5" />
-                    <circle cx="700" cy="18" r="3.5" />
-                </g>
-                <!-- ponytail: Grafik tetap ilustrasi statis; tambah titik nilai dan tooltip setelah API laporan tersedia. -->
+                <path class="area" id="chartArea" d="<?= $initAreaD ?>" fill="url(#fill)" />
+                <path class="line" id="chartLine" d="<?= $initPathD ?>" fill="none" stroke="#ff7a1a" stroke-width="3" />
+                <line id="hoverLine" x1="0" y1="15" x2="0" y2="215" stroke="rgba(255,122,26,0.35)" stroke-dasharray="4 4" stroke-width="2" style="display:none;" />
+                <circle id="hoverPoint" cx="0" cy="0" r="5.5" fill="#ff7a1a" stroke="#ffffff" stroke-width="2.5" style="display:none; filter: drop-shadow(0 0 8px rgba(255,122,26,0.9));" />
             </svg>
-            <div class="chart-labels" aria-hidden="true">
-                <span>Apr</span><span>Mei</span><span>Jun</span><span>Jul</span><span>Agu</span><span>Sep</span><span>Okt</span>
+            <div class="chart-labels" id="chartLabels" aria-hidden="true">
+                <?php foreach ($chartLabels as $idx => $label): ?>
+                    <span data-index="<?= $idx ?>"><?= htmlspecialchars($label) ?></span>
+                <?php endforeach; ?>
             </div>
         </div>
     </article>
@@ -160,7 +202,7 @@ ob_start();
         </div>
         <div class="quick-actions">
             <a href="../members/" id="btnOpenAddMember"><span class="orange-bg" aria-hidden="true"><svg class="icon" focusable="false"><use href="#icon-members"/></svg></span>Tambah Member<svg class="icon action-chevron" aria-hidden="true" focusable="false"><use href="#icon-chevron"/></svg></a>
-            <a href="../cashier/"><span class="orange-bg" aria-hidden="true"><svg class="icon" focusable="false"><use href="#icon-receipt"/></svg></span>Transaksi Baru<svg class="icon action-chevron" aria-hidden="true" focusable="false"><use href="#icon-chevron"/></svg></a>
+            <a href="../cashier/"><span class="orange-bg" aria-hidden="true"><svg class="icon" focusable="false"><use href="#icon-refresh"/></svg></span>Perpanjang Paket<svg class="icon action-chevron" aria-hidden="true" focusable="false"><use href="#icon-chevron"/></svg></a>
             <a href="../attendance/"><span class="orange-bg" aria-hidden="true"><svg class="icon" focusable="false"><use href="#icon-check-in"/></svg></span>Check-in Member<svg class="icon action-chevron" aria-hidden="true" focusable="false"><use href="#icon-chevron"/></svg></a>
         </div>
     </article>
@@ -200,6 +242,32 @@ ob_start();
             <div class="form-group">
                 <label for="memberEmergency">Kontak Darurat (Opsional)</label>
                 <input id="memberEmergency" name="kontak_darurat" type="tel" placeholder="Nomor kerabat / keluarga">
+            </div>
+
+            <!-- Aktivasi Paket Membership Sekalian -->
+            <div class="form-group">
+                <label for="memberPackage">Aktivasi Paket Membership (Opsional)</label>
+                <select id="memberPackage" name="id_paket">
+                    <option value="">-- Tanpa Paket (Registrasi Saja) --</option>
+                </select>
+            </div>
+
+            <div id="packageActivationFields" style="display: none;">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="memberStartDate">Tanggal Mulai Aktif</label>
+                        <input id="memberStartDate" name="tanggal_mulai" type="date">
+                    </div>
+                    <div class="form-group">
+                        <label for="memberPaymentMethod">Metode Pembayaran</label>
+                        <select id="memberPaymentMethod" name="metode_pembayaran">
+                            <option value="tunai">Tunai</option>
+                            <option value="qris">QRIS</option>
+                            <option value="transfer">Transfer Bank</option>
+                        </select>
+                    </div>
+                </div>
+                <div id="packageInfoBadge" style="margin-top: 4px; padding: 10px 14px; font-size: 12px; background: rgba(255, 122, 26, 0.08); border: 1px solid rgba(255, 122, 26, 0.25); border-radius: 10px; color: #fed7aa;" hidden></div>
             </div>
 
             <div class="modal-actions">

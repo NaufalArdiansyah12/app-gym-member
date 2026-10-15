@@ -43,6 +43,10 @@ const searchInput = document.getElementById('memberSearch');
 const genderFilter = document.getElementById('memberGenderFilter');
 const memberTableBody = document.getElementById('memberTableBody');
 const memberCount = document.getElementById('memberCount');
+const paginationEl = document.getElementById('memberPagination');
+const ITEMS_PER_PAGE = 10;
+let allMembers = [];
+let currentPage = 1;
 const toast = document.getElementById('toast');
 let toastTimer;
 
@@ -124,85 +128,159 @@ async function loadMembers() {
             if (elEmergency) elEmergency.textContent = Number(stats.with_contact || 0).toLocaleString('id-ID');
         }
 
-        // Render Tabel Member (Hanya Data Orang)
-        if (memberTableBody) {
-            if (!Array.isArray(members) || members.length === 0) {
-                memberTableBody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--color-muted, #888); padding: 2rem;">Tidak ada data member yang sesuai filter</td></tr>';
-            } else {
-                memberTableBody.innerHTML = members.map(m => `
-                    <tr data-id="${m.id}">
-                        <td>
-                            <button type="button" class="btn-show-detail-trigger" data-id="${m.id}" style="background:none; border:none; padding:0; color:#fff; font-weight:700; cursor:pointer; text-align:left; font:inherit; transition: color 150ms ease;" onmouseover="this.style.color='#ff7a1a'" onmouseout="this.style.color='#fff'">${escapeHtml(m.name)}</button>
-                            <small style="display:block; color:#ff9142; font-family:monospace; margin-top:2px;">${escapeHtml(m.member_code)}</small>
-                        </td>
-                        <td>${escapeHtml(m.phone)}</td>
-                        <td><span class="status ${escapeHtml(m.gender_badge_class)}">${escapeHtml(m.gender_label)}</span></td>
-                        <td>${escapeHtml(m.emergency_contact)}</td>
-                        <td>${escapeHtml(m.created_at_formatted)}</td>
-                        <td class="col-aksi">
-                            <div class="action-buttons-wrap">
-                                <button class="icon-button btn-show-detail-trigger" type="button" data-id="${m.id}" title="Lihat profil member">
-                                    <svg class="icon" aria-hidden="true" focusable="false"><use href="#icon-eye"/></svg>
-                                </button>
-                                <button class="icon-button btn-edit-member" type="button" data-id="${m.id}" title="Edit profil member">
-                                    <svg class="icon" aria-hidden="true" focusable="false"><use href="#icon-edit"/></svg>
-                                </button>
-                                <button class="icon-button btn-delete-member" type="button" data-id="${m.id}" data-name="${escapeHtml(m.name)}" title="Hapus member">
-                                    <svg class="icon" aria-hidden="true" focusable="false"><use href="#icon-trash"/></svg>
-                                </button>
-                            </div>
-                        </td>
-                    </tr>
-                `).join('');
-
-                // Pasang event klik untuk buka modal detail
-                memberTableBody.querySelectorAll('.btn-show-detail-trigger').forEach(btn => {
-                    btn.addEventListener('click', (e) => {
-                        e.stopPropagation();
-                        const id = btn.dataset.id;
-                        openDetailModal(id);
-                    });
-                });
-
-                // Pasang event klik untuk buka modal edit
-                memberTableBody.querySelectorAll('.btn-edit-member').forEach(btn => {
-                    btn.addEventListener('click', (e) => {
-                        e.stopPropagation();
-                        const id = btn.dataset.id;
-                        const member = members.find(item => item.id == id);
-                        if (member) {
-                            openEditModal(member);
-                        }
-                    });
-                });
-
-                // Pasang event delete
-                memberTableBody.querySelectorAll('.btn-delete-member').forEach(btn => {
-                    btn.addEventListener('click', async (e) => {
-                        e.stopPropagation();
-                        const id = btn.dataset.id;
-                        const name = btn.dataset.name;
-                        deleteMember(id, name);
-                    });
-                });
-            }
-        }
-
-        if (memberCount) {
-            memberCount.textContent = `Menampilkan ${members.length} data member`;
-        }
+        allMembers = Array.isArray(members) ? members : [];
+        renderMemberTable();
     } catch (err) {
         console.warn('Gagal memuat data member:', err);
     }
 }
 
+// ponytail: Client-side pagination 10 data per halaman. Upgrade ke server-side limit/offset saat dataset member > ribuan.
+function renderMemberTable() {
+    if (!memberTableBody) return;
+
+    const total = allMembers.length;
+    const totalPages = Math.max(1, Math.ceil(total / ITEMS_PER_PAGE));
+
+    if (currentPage > totalPages) currentPage = totalPages;
+    if (currentPage < 1) currentPage = 1;
+
+    const start = (currentPage - 1) * ITEMS_PER_PAGE;
+    const end = Math.min(start + ITEMS_PER_PAGE, total);
+    const pageMembers = allMembers.slice(start, end);
+
+    if (pageMembers.length === 0) {
+        memberTableBody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--color-muted, #888); padding: 2rem;">Tidak ada data member yang sesuai filter</td></tr>';
+    } else {
+        memberTableBody.innerHTML = pageMembers.map(m => `
+            <tr data-id="${m.id}">
+                <td>
+                    <button type="button" class="btn-show-detail-trigger" data-id="${m.id}" style="background:none; border:none; padding:0; color:#fff; font-weight:700; cursor:pointer; text-align:left; font:inherit; transition: color 150ms ease;" onmouseover="this.style.color='#ff7a1a'" onmouseout="this.style.color='#fff'">${escapeHtml(m.name)}</button>
+                    <small style="display:block; color:#ff9142; font-family:monospace; margin-top:2px;">${escapeHtml(m.member_code)}</small>
+                </td>
+                <td>${escapeHtml(m.phone)}</td>
+                <td><span class="status ${escapeHtml(m.gender_badge_class)}">${escapeHtml(m.gender_label)}</span></td>
+                <td>${escapeHtml(m.emergency_contact)}</td>
+                <td>${escapeHtml(m.created_at_formatted)}</td>
+                <td class="col-aksi">
+                    <div class="action-buttons-wrap">
+                        <button class="icon-button btn-show-detail-trigger" type="button" data-id="${m.id}" title="Lihat profil member">
+                            <svg class="icon" aria-hidden="true" focusable="false"><use href="#icon-eye"/></svg>
+                        </button>
+                        <button class="icon-button btn-edit-member" type="button" data-id="${m.id}" title="Edit profil member">
+                            <svg class="icon" aria-hidden="true" focusable="false"><use href="#icon-edit"/></svg>
+                        </button>
+                        <button class="icon-button btn-delete-member" type="button" data-id="${m.id}" data-name="${escapeHtml(m.name)}" title="Hapus member">
+                            <svg class="icon" aria-hidden="true" focusable="false"><use href="#icon-trash"/></svg>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        `).join('');
+
+        // Pasang event klik untuk buka modal detail
+        memberTableBody.querySelectorAll('.btn-show-detail-trigger').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                openDetailModal(btn.dataset.id);
+            });
+        });
+
+        // Pasang event klik untuk buka modal edit
+        memberTableBody.querySelectorAll('.btn-edit-member').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const id = btn.dataset.id;
+                const member = allMembers.find(item => item.id == id);
+                if (member) {
+                    openEditModal(member);
+                }
+            });
+        });
+
+        // Pasang event delete
+        memberTableBody.querySelectorAll('.btn-delete-member').forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+                e.stopPropagation();
+                deleteMember(btn.dataset.id, btn.dataset.name);
+            });
+        });
+    }
+
+    if (memberCount) {
+        if (total === 0) {
+            memberCount.textContent = 'Menampilkan 0 data member';
+        } else {
+            memberCount.textContent = `Menampilkan ${start + 1}–${end} dari ${total} data member`;
+        }
+    }
+
+    renderPagination(totalPages);
+}
+
+function renderPagination(totalPages) {
+    if (!paginationEl) return;
+
+    if (allMembers.length === 0) {
+        paginationEl.innerHTML = '';
+        return;
+    }
+
+    let pages = [];
+    if (totalPages <= 7) {
+        for (let i = 1; i <= totalPages; i++) pages.push(i);
+    } else {
+        if (currentPage <= 4) {
+            pages = [1, 2, 3, 4, 5, '...', totalPages];
+        } else if (currentPage >= totalPages - 3) {
+            pages = [1, '...', totalPages - 4, totalPages - 3, totalPages - 2, totalPages - 1, totalPages];
+        } else {
+            pages = [1, '...', currentPage - 1, currentPage, currentPage + 1, '...', totalPages];
+        }
+    }
+
+    const prevDisabled = currentPage <= 1 ? 'disabled' : '';
+    const nextDisabled = currentPage >= totalPages ? 'disabled' : '';
+
+    let html = `<button class="pagination-btn" type="button" data-page="${currentPage - 1}" ${prevDisabled} aria-label="Halaman sebelumnya">‹</button>`;
+
+    pages.forEach(p => {
+        if (p === '...') {
+            html += `<span class="pagination-ellipsis">…</span>`;
+        } else {
+            const isActive = p === currentPage;
+            html += `<button class="pagination-btn ${isActive ? 'active' : ''}" type="button" data-page="${p}" ${isActive ? 'disabled aria-current="page"' : ''}>${p}</button>`;
+        }
+    });
+
+    html += `<button class="pagination-btn" type="button" data-page="${currentPage + 1}" ${nextDisabled} aria-label="Halaman berikutnya">›</button>`;
+
+    paginationEl.innerHTML = html;
+}
+
+paginationEl?.addEventListener('click', (e) => {
+    const btn = e.target.closest('.pagination-btn');
+    if (!btn || btn.disabled) return;
+    const targetPage = Number(btn.dataset.page);
+    if (!targetPage || targetPage === currentPage) return;
+    currentPage = targetPage;
+    renderMemberTable();
+    document.querySelector('.table-wrap')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+});
+
 // Debounce input search
 let searchTimer;
 searchInput?.addEventListener('input', () => {
     clearTimeout(searchTimer);
-    searchTimer = setTimeout(loadMembers, 250);
+    searchTimer = setTimeout(() => {
+        currentPage = 1;
+        loadMembers();
+    }, 250);
 });
-genderFilter?.addEventListener('change', loadMembers);
+genderFilter?.addEventListener('change', () => {
+    currentPage = 1;
+    loadMembers();
+});
 
 // ==========================================
 // 2. MODAL DETAIL MEMBER (DATA PRIBADI & PRESENSI)
@@ -255,6 +333,16 @@ async function openDetailModal(id) {
 
         // Informasi Akun & Presensi
         document.getElementById('mdInfoCode').textContent = member.member_code;
+        const infoPkgEl = document.getElementById('mdInfoPackage');
+        if (infoPkgEl) {
+            infoPkgEl.textContent = member.active_package_name && member.active_package_name !== 'Belum ada paket'
+                ? `${member.status_label} (${member.active_package_name})`
+                : (member.status_label || 'Tidak Aktif');
+        }
+        const infoExpEl = document.getElementById('mdInfoExpires');
+        if (infoExpEl) {
+            infoExpEl.textContent = member.expires_at_formatted || '-';
+        }
         document.getElementById('mdInfoJoined').textContent = member.created_at_formatted || '-';
         document.getElementById('mdTotalCheckins').textContent = `${Number(stats.total_checkins || 0).toLocaleString('id-ID')} kali`;
         document.getElementById('mdLastCheckin').textContent = stats.last_checkin || 'Belum pernah';
@@ -418,9 +506,59 @@ const btnCloseModal = document.getElementById('btnCloseModal');
 const btnCancelModal = document.getElementById('btnCancelModal');
 const formAddMember = document.getElementById('formAddMember');
 const memberNameInput = document.getElementById('memberName');
+const memberPackageSelect = document.getElementById('memberPackage');
+const packageActivationFields = document.getElementById('packageActivationFields');
+const memberStartDate = document.getElementById('memberStartDate');
+const packageInfoBadge = document.getElementById('packageInfoBadge');
+
+let availablePackages = [];
+
+async function loadPackagesForModal() {
+    try {
+        const res = await fetch(getApiUrl('admin/packages'), { credentials: 'same-origin' });
+        const json = await res.json();
+        if (json.status === 'success' && Array.isArray(json.data)) {
+            availablePackages = json.data.filter(p => p.tersedia);
+            if (memberPackageSelect) {
+                memberPackageSelect.innerHTML = '<option value="">-- Tanpa Paket (Registrasi Saja) --</option>' +
+                    availablePackages.map(p => {
+                        const price = p.harga_formatted || ('Rp ' + Number(p.harga).toLocaleString('id-ID'));
+                        return `<option value="${p.id}">${escapeHtml(p.nama_paket)} — ${price} (${p.durasi_hari} hari)</option>`;
+                    }).join('');
+            }
+        }
+    } catch (err) {
+        console.warn('Gagal memuat paket:', err);
+    }
+}
+
+function updatePackageFields() {
+    const pkgId = Number(memberPackageSelect?.value || 0);
+    const selected = availablePackages.find(p => p.id === pkgId);
+
+    if (selected) {
+        if (packageActivationFields) packageActivationFields.style.display = 'block';
+        if (memberStartDate && !memberStartDate.value) {
+            memberStartDate.value = new Date().toISOString().slice(0, 10);
+        }
+        if (packageInfoBadge) {
+            packageInfoBadge.hidden = false;
+            const price = selected.harga_formatted || ('Rp ' + Number(selected.harga).toLocaleString('id-ID'));
+            packageInfoBadge.innerHTML = `<strong>${escapeHtml(selected.nama_paket)}</strong> · Durasi ${selected.durasi_hari} Hari · Biaya: <strong>${price}</strong>`;
+        }
+    } else {
+        if (packageActivationFields) packageActivationFields.style.display = 'none';
+        if (packageInfoBadge) packageInfoBadge.hidden = true;
+    }
+}
+
+memberPackageSelect?.addEventListener('change', updatePackageFields);
 
 function openModal() {
     if (!modalAddMember) return;
+    if (formAddMember) formAddMember.reset();
+    if (memberStartDate) memberStartDate.value = new Date().toISOString().slice(0, 10);
+    updatePackageFields();
     modalAddMember.classList.add('is-active');
     modalAddMember.setAttribute('aria-hidden', 'false');
     document.body.style.overflow = 'hidden';
@@ -455,6 +593,9 @@ formAddMember?.addEventListener('submit', async (e) => {
         nomor_telepon: formData.get('nomor_telepon'),
         jenis_kelamin: formData.get('jenis_kelamin'),
         kontak_darurat: formData.get('kontak_darurat'),
+        id_paket: Number(formData.get('id_paket')) || 0,
+        tanggal_mulai: formData.get('tanggal_mulai') || undefined,
+        metode_pembayaran: formData.get('metode_pembayaran') || 'tunai',
     };
 
     try {
@@ -474,7 +615,9 @@ formAddMember?.addEventListener('submit', async (e) => {
 
         closeModal();
         formAddMember.reset();
+        updatePackageFields();
         showToast(data.message || 'Member baru berhasil didaftarkan!');
+        currentPage = 1;
         loadMembers();
         if (data.data && data.data.id) {
             openDetailModal(data.data.id);
@@ -502,3 +645,4 @@ document.addEventListener('keydown', (e) => {
 });
 
 loadMembers();
+loadPackagesForModal();

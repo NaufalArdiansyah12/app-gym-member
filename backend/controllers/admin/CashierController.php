@@ -75,7 +75,11 @@ class CashierController {
     }
 
     public static function createTransaction(): void {
-        $input = json_decode(file_get_contents('php://input'), true) ?? [];
+        $raw = file_get_contents('php://input');
+        $input = json_decode($raw, true);
+        if (!is_array($input)) {
+            $input = $_POST ?? [];
+        }
 
         $userId = isset($input['user_id']) ? (int) $input['user_id'] : 0;
         $paketId = isset($input['paket_id']) ? (int) $input['paket_id'] : 0;
@@ -125,18 +129,14 @@ class CashierController {
             return;
         }
 
-        $tipeTransaksi = trim($input['tipe_transaksi'] ?? 'baru');
-        $validTipe = ['baru', 'perpanjang'];
-        if (!in_array($tipeTransaksi, $validTipe, true)) {
-            $tipeTransaksi = 'baru';
-        }
+        $tipeTransaksi = 'perpanjang';
 
-        // Hitung tanggal mulai dan tanggal selesai berdasarkan tipe transaksi
-        // ponytail: Jika perpanjang & member masih aktif, sambung dari expiry sebelumnya; jika baru, mulai hari ini.
+        // Hitung tanggal mulai dan tanggal selesai perpanjangan paket
+        // ponytail: Sambung dari expiry jika member masih aktif; jika tidak/expired, mulai hari ini.
         $today = date('Y-m-d');
         if ($tanggalMulaiInput !== '' && preg_match('/^\d{4}-\d{2}-\d{2}$/', $tanggalMulaiInput)) {
             $startDate = $tanggalMulaiInput;
-        } elseif ($tipeTransaksi === 'perpanjang' && !empty($user['membership_expires_at']) && $user['membership_expires_at'] >= $today) {
+        } elseif (!empty($user['membership_expires_at']) && $user['membership_expires_at'] >= $today) {
             $startDate = date('Y-m-d', strtotime($user['membership_expires_at'] . ' +1 day'));
         } else {
             $startDate = $today;
@@ -170,7 +170,7 @@ class CashierController {
             http_response_code(201);
             echo json_encode([
                 'status' => 'ok',
-                'message' => 'Transaksi berhasil diproses',
+                'message' => 'Perpanjangan paket berhasil diproses',
                 'data' => [
                     'transaction_id' => $transaksiId,
                     'invoice_code' => $invoiceCode,
@@ -189,7 +189,7 @@ class CashierController {
                     ],
                     'tanggal_mulai' => $startDate,
                     'tanggal_selesai' => $endDate,
-                    'tipe_transaksi' => $tipeTransaksi === 'perpanjang' ? 'Perpanjang Paket' : 'Beli Paket Baru',
+                    'tipe_transaksi' => 'Perpanjang Paket',
                     'metode_pembayaran' => $metode,
                     'jumlah_bayar' => $bayarNominal,
                     'kembalian' => $kembalian,

@@ -322,6 +322,9 @@ class MemberController {
         $gender = trim($input['jenis_kelamin'] ?? $input['gender'] ?? 'pria');
         $idPaket = (int)($input['id_paket'] ?? $input['package_id'] ?? 0);
         $startDate = trim($input['tanggal_mulai'] ?? $input['start_date'] ?? date('Y-m-d'));
+        if ($startDate === '' || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $startDate)) {
+            $startDate = date('Y-m-d');
+        }
         $emergencyContact = trim($input['kontak_darurat'] ?? $input['emergency_contact'] ?? '');
         $address = trim($input['alamat'] ?? $input['address'] ?? '');
         $paymentMethod = trim($input['metode_pembayaran'] ?? $input['payment_method'] ?? 'tunai');
@@ -337,20 +340,18 @@ class MemberController {
         // Generate member_code
         $memberCode = AdminController::generateMemberCode($db);
 
-        // Jika email kosong, buat email otomatis berdasarkan member_code
-        if ($email === '') {
-            $email = strtolower($memberCode) . '@gym.com';
+        // Jika email diisi, cek ganda. Jika kosong, biarkan null (tidak buat email otomatis)
+        $email = $email !== '' ? $email : null;
+        if ($email !== null) {
+            $checkStmt = $db->prepare('SELECT id FROM users WHERE email = ? LIMIT 1');
+            $checkStmt->execute([$email]);
+            if ($checkStmt->fetch()) {
+                AdminController::error('Email sudah terdaftar', 422);
+            }
         }
 
-        // Cek email ganda
-        $checkStmt = $db->prepare('SELECT id FROM users WHERE email = ? LIMIT 1');
-        $checkStmt->execute([$email]);
-        if ($checkStmt->fetch()) {
-            $email = strtolower($memberCode) . '.' . time() . '@gym.com';
-        }
-
-        // Default password user123
-        $passwordHash = password_hash('user123', PASSWORD_BCRYPT);
+        // Default password 12345678
+        $passwordHash = password_hash('12345678', PASSWORD_BCRYPT);
 
         // Ambil info paket jika dipilih
         $paket = null;
@@ -417,13 +418,19 @@ class MemberController {
 
             $db->commit();
 
+            $successMsg = "Member {$name} ({$memberCode}) berhasil didaftarkan! Password default: 12345678.";
+            if ($paket && $expiresAt) {
+                $successMsg .= " Paket {$paket['nama_paket']} aktif hingga {$expiresAt}.";
+            }
+
             AdminController::json([
                 'status'  => 'success',
-                'message' => "Member {$name} ({$memberCode}) berhasil didaftarkan!",
+                'message' => $successMsg,
                 'data'    => [
                     'id'                    => $userId,
                     'member_code'           => $memberCode,
                     'name'                  => $name,
+                    'default_password'      => '12345678',
                     'email'                 => $email,
                     'phone'                 => $phone,
                     'gender'                => $gender,

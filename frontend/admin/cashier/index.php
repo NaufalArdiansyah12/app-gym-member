@@ -39,7 +39,7 @@ ob_start();
             <h2>Riwayat Transaksi</h2>
             <p class="muted">Daftar transaksi kasir dan bukti pembayaran.</p>
         </div>
-        <button id="btnOpenAddTransaction" class="primary-button" type="button"><svg class="icon icon-sm" aria-hidden="true" focusable="false"><use href="#icon-plus"/></svg> Tambah Transaksi</button>
+        <button id="btnOpenAddTransaction" class="primary-button" type="button"><svg class="icon icon-sm" aria-hidden="true" focusable="false"><use href="#icon-refresh"/></svg> Perpanjang Paket</button>
     </div>
 
     <div class="toolbar">
@@ -86,38 +86,25 @@ ob_start();
     <div class="modal-dialog" role="dialog" aria-modal="true" aria-labelledby="modalTransactionTitle">
         <div class="modal-header">
             <div>
-                <h2 id="modalTransactionTitle">Tambah Transaksi Baru</h2>
-                <p class="muted">Pilih member, paket membership, dan metode pembayaran</p>
+                <h2 id="modalTransactionTitle">Perpanjang Paket Member</h2>
+                <p class="muted">Pilih member untuk memperpanjang masa aktif paket langganan</p>
             </div>
             <button id="btnCloseModal" class="icon-button modal-close-btn" type="button" aria-label="Tutup modal">
                 <svg class="icon" aria-hidden="true" focusable="false"><use href="#icon-close"/></svg>
             </button>
         </div>
         <form id="formAddTransaction" class="modal-form">
-            <!-- Pilihan Tipe Transaksi: Beli Paket Baru vs Perpanjang -->
+            <!-- Layanan Kasir: Khusus Perpanjang Paket -->
+            <input type="hidden" name="tipe_transaksi" id="transactionType" value="perpanjang">
             <div class="form-group">
-                <label>Tipe Transaksi</label>
-                <div class="transaction-type-selector" role="radiogroup" aria-label="Tipe transaksi">
-                    <label class="type-option is-active" id="labelTypeBaru">
-                        <input type="radio" name="tipe_transaksi" value="baru" checked class="visually-hidden">
-                        <span class="type-icon" aria-hidden="true">
-                            <svg class="icon" focusable="false"><use href="#icon-sparkle"/></svg>
-                        </span>
-                        <span class="type-label">
-                            <strong>Beli Paket Baru</strong>
-                            <small>Member baru / mulai hari ini</small>
-                        </span>
-                    </label>
-                    <label class="type-option" id="labelTypePerpanjang">
-                        <input type="radio" name="tipe_transaksi" value="perpanjang" class="visually-hidden">
-                        <span class="type-icon" aria-hidden="true">
-                            <svg class="icon" focusable="false"><use href="#icon-refresh"/></svg>
-                        </span>
-                        <span class="type-label">
-                            <strong>Perpanjang Paket</strong>
-                            <small>Lanjut dari masa aktif</small>
-                        </span>
-                    </label>
+                <div class="type-option is-active" style="cursor: default; pointer-events: none;">
+                    <span class="type-icon" aria-hidden="true">
+                        <svg class="icon" focusable="false"><use href="#icon-refresh"/></svg>
+                    </span>
+                    <span class="type-label">
+                        <strong>Layanan Kasir: Perpanjang Paket</strong>
+                        <small>Memperpanjang masa aktif paket langganan member</small>
+                    </span>
                 </div>
             </div>
 
@@ -162,7 +149,7 @@ ob_start();
             <div class="payment-bill-card">
                 <div class="bill-row">
                     <span>Tipe Transaksi</span>
-                    <strong id="summaryTypeLabel" class="bill-type">Beli Paket Baru</strong>
+                    <strong id="summaryTypeLabel" class="bill-type">Perpanjang Paket</strong>
                 </div>
                 <div class="bill-row">
                     <span>Estimasi Masa Berlaku</span>
@@ -182,7 +169,7 @@ ob_start();
 
             <div class="modal-actions">
                 <button id="btnCancelModal" class="btn-cancel" type="button">Batal</button>
-                <button id="btnSubmitTransaction" class="btn-submit" type="submit">Proses & Bayar</button>
+                <button id="btnSubmitTransaction" class="btn-submit" type="submit">Proses Perpanjangan</button>
             </div>
         </form>
     </div>

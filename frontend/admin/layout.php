@@ -16,7 +16,7 @@ $pageDate = date('d M Y');
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= htmlspecialchars($title ?? 'Admin') ?> | KelolaGym</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css?v=<?= @filemtime('style.css') ?: time() ?>">
 </head>
 <body>
     <svg class="icon-sprite" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
@@ -61,12 +61,6 @@ $pageDate = date('d M Y');
                         </a>
                     <?php endforeach; ?>
                 </nav>
-                <p class="menu-label">PENGATURAN</p>
-                <nav class="nav-list" aria-label="Pengaturan">
-                    <a class="nav-item <?= ($page ?? '') === 'settings' ? 'active' : '' ?>" <?= ($page ?? '') === 'settings' ? 'aria-current="page"' : '' ?> href="../settings/">
-                        <svg class="icon" aria-hidden="true" focusable="false"><use href="#icon-settings"/></svg>Pengaturan
-                    </a>
-                </nav>
             </div>
             <button id="btnLogout" class="logout" type="button"><svg class="icon" aria-hidden="true" focusable="false"><use href="#icon-logout"/></svg>Keluar</button>
         </aside>
@@ -101,6 +95,6 @@ $pageDate = date('d M Y');
 
     <div id="toast" class="toast" role="status"></div>
     <script src="../../assets/js/qrcode.min.js"></script>
-    <script src="script.js"></script>
+    <script src="script.js?v=<?= @filemtime('script.js') ?: time() ?>"></script>
 </body>
 </html>

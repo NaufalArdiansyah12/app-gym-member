@@ -20,6 +20,7 @@ require_once __DIR__ . '/../controllers/admin/PackageController.php';
 require_once __DIR__ . '/../controllers/admin/AttendanceController.php';
 require_once __DIR__ . '/../controllers/admin/TransactionController.php';
 require_once __DIR__ . '/../controllers/admin/CashierController.php';
+require_once __DIR__ . '/../controllers/admin/ReportsController.php';
 require_once __DIR__ . '/../controllers/user/UserController.php';
 require_once __DIR__ . '/../controllers/user/UserDashboardController.php';
 require_once __DIR__ . '/../controllers/user/UserAttendanceController.php';
@@ -167,8 +168,8 @@ if (preg_match('#/api/admin/transactions/?$#', $uri)) {
     }
 }
 
-if (preg_match('#/api/admin/reports/?$#', $uri) && $method === 'GET') {
-    TransactionController::reports();
+if (preg_match('#/api/admin/(?:reports|laporan)/?$#', $uri) && $method === 'GET') {
+    LaporanController::index();
     exit;
 }
 
@@ -198,6 +199,23 @@ if (preg_match('#/api/user/attendance/?$#', $uri)) {
 // 10. User Membership Route
 if (preg_match('#/api/user/membership/?$#', $uri) && $method === 'GET') {
     UserMembershipController::index();
+    exit;
+}
+
+// 11. User Profile & Settings Routes
+if (preg_match('#/api/user/profile/?$#', $uri)) {
+    if ($method === 'GET') {
+        UserController::getProfile();
+        exit;
+    }
+    if ($method === 'POST' || $method === 'PUT') {
+        UserController::updateProfile();
+        exit;
+    }
+}
+
+if (preg_match('#/api/user/password/?$#', $uri) && $method === 'POST') {
+    UserController::changePassword();
     exit;
 }
 

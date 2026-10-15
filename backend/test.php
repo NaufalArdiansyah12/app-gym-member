@@ -9,6 +9,7 @@ require_once __DIR__ . '/controllers/admin/PackageController.php';
 require_once __DIR__ . '/controllers/admin/AttendanceController.php';
 require_once __DIR__ . '/controllers/admin/TransactionController.php';
 require_once __DIR__ . '/controllers/admin/CashierController.php';
+require_once __DIR__ . '/controllers/admin/ReportsController.php';
 require_once __DIR__ . '/controllers/user/UserController.php';
 require_once __DIR__ . '/controllers/user/UserDashboardController.php';
 require_once __DIR__ . '/controllers/user/UserAttendanceController.php';
@@ -23,6 +24,27 @@ AuthController::login();
 $output = ob_get_clean();
 $data = json_decode($output, true);
 assert(isset($data['error']), 'Empty login payload must return error message');
+
+// Test admin login via email
+ob_start();
+AuthController::login(['email' => 'admin@gym.com', 'password' => 'admin123']);
+$adminOut = ob_get_clean();
+$adminData = json_decode($adminOut, true);
+assert(($adminData['status'] ?? '') === 'ok' && ($adminData['data']['role'] ?? '') === 'admin', 'Admin login via email must succeed');
+
+// Test member login via member_code
+ob_start();
+AuthController::login(['identifier' => 'GYM001', 'password' => 'user123']);
+$memberOut = ob_get_clean();
+$memberData = json_decode($memberOut, true);
+assert(($memberData['status'] ?? '') === 'ok' && ($memberData['data']['role'] ?? '') === 'user' && $memberData['data']['member_code'] === 'GYM001', 'Member login via member_code must succeed');
+
+// Test invalid login
+ob_start();
+AuthController::login(['identifier' => 'WRONG_CODE', 'password' => 'wrongpass']);
+$invalidOut = ob_get_clean();
+$invalidData = json_decode($invalidOut, true);
+assert(isset($invalidData['error']), 'Invalid login credentials must return error message');
 
 // Check CashierController
 assert(class_exists('CashierController'), 'CashierController class not found');
@@ -63,6 +85,23 @@ assert(class_exists('MemberController'), 'MemberController class not found');
 assert(class_exists('PackageController'), 'PackageController class not found');
 assert(class_exists('AttendanceController'), 'AttendanceController class not found');
 assert(class_exists('TransactionController'), 'TransactionController class not found');
+assert(class_exists('ReportsController'), 'ReportsController class not found');
+assert(class_exists('LaporanController'), 'LaporanController class not found');
+assert(method_exists('LaporanController', 'index'), 'LaporanController::index method not found');
+
+// Test LaporanController::index response structure
+$_SESSION['user'] = ['id' => 1, 'role' => 'admin'];
+ob_start();
+LaporanController::index();
+$repOut = ob_get_clean();
+$repData = json_decode($repOut, true);
+assert(($repData['status'] ?? '') === 'success', 'LaporanController::index must return success status');
+assert(isset($repData['data']['summary']), 'LaporanController::index must return summary');
+assert(isset($repData['data']['summary']['revenue']), 'Summary must contain revenue');
+assert(isset($repData['data']['transactions']), 'LaporanController::index must return transactions list');
+assert(isset($repData['data']['packages']), 'LaporanController::index must return packages');
+assert(isset($repData['data']['attendances']), 'LaporanController::index must return attendances');
+assert(isset($repData['data']['method_stats']), 'LaporanController::index must return method_stats');
 
 // 3. Database Connection & Table Schema Tests
 $db = getDB();
@@ -92,6 +131,12 @@ $chart = DashboardController::getRevenueChart($db);
 assert(isset($chart['labels']) && is_array($chart['labels']), 'Chart must return labels array');
 assert(count($chart['labels']) === 7, 'Chart must return 7 months of labels');
 assert(isset($chart['series']) && is_array($chart['series']), 'Chart must return series array');
+
+$memberChart = DashboardController::getMemberChart($db);
+assert(isset($memberChart['labels']) && is_array($memberChart['labels']), 'Member chart must return labels array');
+assert(count($memberChart['labels']) === 7, 'Member chart must return 7 months of labels');
+assert(isset($memberChart['series']) && is_array($memberChart['series']), 'Member chart must return series array');
+assert(isset($memberChart['total_7_months']), 'Member chart must return total_7_months');
 
 $recent = DashboardController::getRecentCheckins($db);
 assert(is_array($recent), 'Recent checkins must return array');
@@ -166,6 +211,66 @@ unset($_GET['gender']);
 $genMemberCode = AdminController::generateMemberCode($db);
 assert(preg_match('/^GYM[-A-Z0-9]+$/', $genMemberCode), 'Generated member code must match attendance QR pattern');
 
+// Test Member Registration with direct Package Activation
+$_POST = [
+    'nama_lengkap' => 'Member Auto Paket Test',
+    'nomor_telepon' => '089988776655',
+    'jenis_kelamin' => 'pria',
+    'id_paket' => 1,
+    'tanggal_mulai' => date('Y-m-d'),
+    'metode_pembayaran' => 'qris',
+];
+ob_start();
+MemberController::store();
+$storeOut = ob_get_clean();
+$_POST = [];
+$storeData = json_decode($storeOut, true);
+assert($storeData['status'] === 'success', 'Member registration with package must succeed');
+assert($storeData['data']['membership_status'] === 'active', 'Member registered with package must have active status');
+assert(!empty($storeData['data']['membership_expires_at']), 'Member registered with package must have expires_at');
+assert(($storeData['data']['default_password'] ?? '') === '12345678', 'Member registration must return default_password 12345678');
+assert($storeData['data']['email'] === null, 'Member registered without email must have null email');
+$newMemberId = (int)$storeData['data']['id'];
+$newMemberCode = $storeData['data']['member_code'];
+
+$dbEmail = $db->query("SELECT email FROM users WHERE id = $newMemberId")->fetchColumn();
+assert($dbEmail === null, 'Database email column for newly created member must be null');
+
+// Verify member can login using member_code and default password 12345678
+ob_start();
+AuthController::login(['identifier' => $newMemberCode, 'password' => '12345678']);
+$newLoginOut = ob_get_clean();
+$newLoginData = json_decode($newLoginOut, true);
+assert(($newLoginData['status'] ?? '') === 'ok' && $newLoginData['data']['member_code'] === $newMemberCode, 'Newly created member must be able to login with member_code and default password 12345678');
+
+// Check database records for langganan and transaksi
+$testSub = $db->query("SELECT * FROM langganan WHERE id_user = $newMemberId ORDER BY id DESC LIMIT 1")->fetch();
+assert($testSub !== false, 'Langganan record must be created on member registration with package');
+$testTrx = $db->query("SELECT * FROM transaksi WHERE id_langganan = {$testSub['id']}")->fetch();
+assert($testTrx !== false, 'Transaksi record must be created on member registration with package');
+assert($testTrx['metode_pembayaran'] === 'qris', 'Metode pembayaran in transaksi must match input');
+
+// Test Cashier Perpanjang Paket on this member
+$prevExpiry = $storeData['data']['membership_expires_at'];
+$_POST = [
+    'user_id' => $newMemberId,
+    'paket_id' => 1, // 30 days
+    'jumlah_bayar' => 150000,
+    'metode_pembayaran' => 'tunai',
+];
+ob_start();
+CashierController::createTransaction();
+$renewOut = ob_get_clean();
+$_POST = [];
+$renewData = json_decode($renewOut, true);
+assert($renewData['status'] === 'ok', 'Cashier perpanjang must return ok status');
+assert($renewData['data']['tipe_transaksi'] === 'Perpanjang Paket', 'Cashier must return Perpanjang Paket as tipe_transaksi');
+$expectedRenewExpiry = date('Y-m-d', strtotime("$prevExpiry + 31 days")); // +1 day start + 30 days
+assert($renewData['data']['member']['membership_expires_at'] === $expectedRenewExpiry, 'Perpanjangan must extend from previous expiry date');
+
+// Clean up test member (cascades to langganan & transaksi)
+$db->exec("DELETE FROM users WHERE id = $newMemberId");
+
 // 7. Attendance Logic Tests
 $todayCount = (int)$db->query("SELECT COUNT(*) FROM presensi WHERE DATE(waktu_presensi) = CURDATE()")->fetchColumn();
 assert($todayCount >= 0, 'Today checkins query must execute successfully');
@@ -234,5 +339,81 @@ assert($userMemData['status'] === 'success', 'User membership must return succes
 assert(isset($userMemData['data']['active']['package_name']), 'User membership must contain active package_name');
 assert(isset($userMemData['data']['active']['days_remaining']), 'User membership must contain active days_remaining');
 assert(is_array($userMemData['data']['history']), 'User membership must contain history array');
+
+// 10. User Settings / Profile & Password Change Tests
+$_SESSION['user'] = ['id' => 2, 'role' => 'user'];
+ob_start();
+UserController::getProfile();
+$profileOut = ob_get_clean();
+$profileData = json_decode($profileOut, true);
+assert(($profileData['status'] ?? '') === 'success', 'UserController::getProfile must succeed');
+assert(isset($profileData['data']['user']['member_code']), 'User profile must contain member_code');
+assert(isset($profileData['data']['user']['email']), 'User profile must contain email');
+
+// Test update profile
+$_POST = [
+    'name' => 'Gym Member Updated',
+    'phone' => '081234567899',
+    'gender' => 'pria',
+    'address' => 'Jl. Baru No. 123',
+    'emergency_contact' => '0811998877',
+];
+ob_start();
+UserController::updateProfile();
+$updateOut = ob_get_clean();
+$_POST = [];
+$updateData = json_decode($updateOut, true);
+assert(($updateData['status'] ?? '') === 'success', 'UserController::updateProfile must succeed');
+assert($updateData['data']['user']['name'] === 'Gym Member Updated', 'Updated user name must match');
+
+// Test change password validation (wrong current password)
+$_POST = [
+    'current_password' => 'wrongcurrentpassword',
+    'new_password' => 'newpassword123',
+    'confirm_password' => 'newpassword123'
+];
+ob_start();
+UserController::changePassword();
+$pwErrOut = ob_get_clean();
+$_POST = [];
+$pwErrData = json_decode($pwErrOut, true);
+assert(isset($pwErrData['error']), 'Wrong current password must return error');
+
+// Test change password validation (mismatched confirm)
+$_POST = [
+    'current_password' => 'user123',
+    'new_password' => 'newpassword123',
+    'confirm_password' => 'differentpassword'
+];
+ob_start();
+UserController::changePassword();
+$pwMismatchOut = ob_get_clean();
+$_POST = [];
+$pwMismatchData = json_decode($pwMismatchOut, true);
+assert(isset($pwMismatchData['error']), 'Mismatched confirm password must return error');
+
+// Test change password success
+$_POST = [
+    'current_password' => 'user123',
+    'new_password' => 'newpassword123',
+    'confirm_password' => 'newpassword123'
+];
+ob_start();
+UserController::changePassword();
+$pwSuccessOut = ob_get_clean();
+$_POST = [];
+$pwSuccessData = json_decode($pwSuccessOut, true);
+assert(($pwSuccessData['status'] ?? '') === 'success', 'Password change must succeed with correct credentials');
+
+// Revert password back to user123 so seed tests remain intact
+$_POST = [
+    'current_password' => 'newpassword123',
+    'new_password' => 'user123',
+    'confirm_password' => 'user123'
+];
+ob_start();
+UserController::changePassword();
+ob_end_clean();
+$_POST = [];
 
 echo "✓ All backend unit tests passed successfully!\n";

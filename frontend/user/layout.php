@@ -46,7 +46,7 @@ $pageDate = date('d M Y');
         </button>
         <div class="mobile-brand">
             <svg class="icon brand-mark" aria-hidden="true" focusable="false"><use href="#icon-gym"/></svg>
-            <span>USER <span class="accent">GYM</span></span>
+            <span>User<span class="accent">Gym</span></span>
         </div>
         <div class="mobile-user-avatar" id="mobileUserAvatar" title="Lihat Profil">M</div>
     </div>
@@ -78,6 +78,9 @@ $pageDate = date('d M Y');
                     </a>
                     <a class="nav-item <?= ($page ?? '') === 'membership' ? 'active' : '' ?>" href="../membership/">
                         <svg class="icon" aria-hidden="true" focusable="false"><use href="#icon-package"/></svg>Halaman Member
+                    </a>
+                    <a class="nav-item <?= ($page ?? '') === 'settings' ? 'active' : '' ?>" href="../settings/">
+                        <svg class="icon" aria-hidden="true" focusable="false"><use href="#icon-settings"/></svg>Pengaturan Akun
                     </a>
                 </nav>
             </div>
@@ -126,6 +129,9 @@ $pageDate = date('d M Y');
             <a class="nav-circle-btn <?= ($page ?? '') === 'membership' ? 'active' : '' ?>" id="btnBottomMembership" href="../membership/" aria-label="Status & Sisa Waktu Membership">
                 <svg class="nav-icon" aria-hidden="true" focusable="false"><use href="#icon-package"/></svg>
             </a>
+            <a class="nav-circle-btn <?= ($page ?? '') === 'settings' ? 'active' : '' ?>" id="btnBottomSettings" href="../settings/" aria-label="Pengaturan Akun">
+                <svg class="nav-icon" aria-hidden="true" focusable="false"><use href="#icon-settings"/></svg>
+            </a>
         </div>
     </nav>
 
@@ -159,6 +165,10 @@ $pageDate = date('d M Y');
                 </div>
             </div>
             <div class="profile-modal-footer">
+                <a href="../settings/" class="btn-modal-settings" style="display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 11px; margin-bottom: 8px; border-radius: 12px; background: rgba(255,255,255,0.08); color: #e5e7eb; text-decoration: none; font-size: 13px; font-weight: 600; border: 1px solid rgba(255,255,255,0.12); box-sizing: border-box;">
+                    <svg class="icon" style="width: 16px; height: 16px;" focusable="false"><use href="#icon-settings"/></svg>
+                    <span>Pengaturan Akun</span>
+                </a>
                 <button id="btnModalLogout" class="btn-modal-logout" type="button">
                     <svg class="icon"><use href="#icon-logout"/></svg>
                     <span>Keluar dari Akun</span>

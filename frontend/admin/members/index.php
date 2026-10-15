@@ -76,7 +76,7 @@ ob_start();
 
     <div class="table-footer">
         <span id="memberCount" aria-live="polite">Memuat data…</span>
-        <button class="soft-button" type="button" disabled aria-label="Halaman 1">‹ &nbsp; 1 &nbsp; 2 &nbsp; ›</button>
+        <div id="memberPagination" class="pagination" role="navigation" aria-label="Navigasi Halaman Member"></div>
     </div>
 </section>
 
@@ -93,6 +93,10 @@ ob_start();
             </button>
         </div>
         <form id="formAddMember" class="modal-form">
+            <div style="margin-bottom: 14px; padding: 10px 14px; font-size: 12px; background: rgba(59, 130, 246, 0.08); border: 1px solid rgba(59, 130, 246, 0.25); border-radius: 10px; color: #93c5fd;">
+                <strong>Akses Login Member:</strong> Kode member dibuat otomatis dan password default awal: <code style="color: #fed7aa; font-weight: bold;">12345678</code>. Member masuk menggunakan Kode Member &amp; Password.
+            </div>
+
             <div class="form-group">
                 <label for="memberName">Nama Lengkap</label>
                 <input id="memberName" name="nama_lengkap" type="text" placeholder="Contoh: Budi Pratama" required>
@@ -115,6 +119,32 @@ ob_start();
             <div class="form-group">
                 <label for="memberEmergency">Kontak Darurat (Opsional)</label>
                 <input id="memberEmergency" name="kontak_darurat" type="tel" placeholder="Nomor kerabat / keluarga">
+            </div>
+
+            <!-- Aktivasi Paket Membership Sekalian -->
+            <div class="form-group">
+                <label for="memberPackage">Aktivasi Paket Membership (Opsional)</label>
+                <select id="memberPackage" name="id_paket">
+                    <option value="">-- Tanpa Paket (Registrasi Saja) --</option>
+                </select>
+            </div>
+
+            <div id="packageActivationFields" style="display: none;">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="memberStartDate">Tanggal Mulai Aktif</label>
+                        <input id="memberStartDate" name="tanggal_mulai" type="date">
+                    </div>
+                    <div class="form-group">
+                        <label for="memberPaymentMethod">Metode Pembayaran</label>
+                        <select id="memberPaymentMethod" name="metode_pembayaran">
+                            <option value="tunai">Tunai</option>
+                            <option value="qris">QRIS</option>
+                            <option value="transfer">Transfer Bank</option>
+                        </select>
+                    </div>
+                </div>
+                <div id="packageInfoBadge" style="margin-top: 4px; padding: 10px 14px; font-size: 12px; background: rgba(255, 122, 26, 0.08); border: 1px solid rgba(255, 122, 26, 0.25); border-radius: 10px; color: #fed7aa;" hidden></div>
             </div>
 
             <div class="modal-actions">
@@ -174,11 +204,23 @@ ob_start();
             </div>
 
             <div class="modal-info-box">
-                <h3 style="font-size: 11px; color: #9ca3af; text-transform: uppercase; margin: 0 0 10px; letter-spacing: 0.5px;">Informasi Akun &amp; Presensi</h3>
+                <h3 style="font-size: 11px; color: #9ca3af; text-transform: uppercase; margin: 0 0 10px; letter-spacing: 0.5px;">Informasi Akun &amp; Membership</h3>
                 <div class="info-list">
                     <div class="info-item">
                         <span class="info-label">Kode Member</span>
                         <span class="info-value" id="mdInfoCode" style="color: #ff9142; font-family: monospace;">-</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Password Default</span>
+                        <span class="info-value" style="font-family: monospace; color: #fed7aa; font-weight: 600;">12345678</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Status &amp; Paket</span>
+                        <span class="info-value" id="mdInfoPackage">-</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Masa Berlaku</span>
+                        <span class="info-value" id="mdInfoExpires">-</span>
                     </div>
                     <div class="info-item">
                         <span class="info-label">Tanggal Terdaftar</span>

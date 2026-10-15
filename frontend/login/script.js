@@ -7,61 +7,26 @@ const API_URL = window.location.port === '3000'
 const form = document.getElementById('loginForm');
 const btn = document.getElementById('btnSubmit');
 const alertBox = document.getElementById('alert');
-const emailInput = document.getElementById('email');
-const passwordInput = document.getElementById('password');
 
 const showAlert = (message, type = 'error') => {
     alertBox.textContent = message;
     alertBox.className = `alert alert-${type}`;
 };
 
-// Toggle intip kata sandi
-const btnToggle = document.getElementById('btnTogglePassword');
-if (btnToggle && passwordInput) {
-    btnToggle.addEventListener('click', () => {
-        const isPass = passwordInput.type === 'password';
-        passwordInput.type = isPass ? 'text' : 'password';
-        btnToggle.textContent = isPass ? 'Tutup' : 'Lihat';
-    });
-}
-
-// Tombol demo kredensial cepat
-const fillCredentials = (email, pass) => {
-    if (emailInput) emailInput.value = email;
-    if (passwordInput) passwordInput.value = pass;
-    alertBox.className = 'alert hidden';
-    if (passwordInput) passwordInput.focus();
-};
-
-document.getElementById('btnDemoAdmin')?.addEventListener('click', () => {
-    fillCredentials('admin@gym.com', 'admin123');
-});
-
-document.getElementById('btnDemoUser')?.addEventListener('click', () => {
-    fillCredentials('user@gym.com', 'user123');
-});
-
 form.addEventListener('submit', async (e) => {
     e.preventDefault();
     alertBox.className = 'alert hidden';
     btn.disabled = true;
-    btn.innerHTML = `<span>Memproses...</span>`;
+    btn.textContent = 'Memproses...';
 
-    const email = emailInput ? emailInput.value.trim() : '';
-    const password = passwordInput ? passwordInput.value : '';
-
-    if (!email || !password) {
-        showAlert('Harap isi alamat email dan kata sandi.');
-        btn.disabled = false;
-        btn.innerHTML = `<span>Masuk Sekarang</span><svg class="btn-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m9 5 7 7-7 7"/></svg>`;
-        return;
-    }
+    const identifier = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value;
 
     try {
         const res = await fetch(API_URL, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, password })
+            body: JSON.stringify({ identifier, email: identifier, password })
         });
 
         const data = await res.json();
@@ -71,7 +36,7 @@ form.addEventListener('submit', async (e) => {
             return;
         }
 
-        showAlert('Login berhasil! Mengalihkan ke dashboard...', 'success');
+        showAlert('Login berhasil! Mengalihkan...', 'success');
         localStorage.setItem('user', JSON.stringify(data.data));
 
         setTimeout(() => {
@@ -80,11 +45,25 @@ form.addEventListener('submit', async (e) => {
             } else {
                 window.location.href = '../user/dashboard/';
             }
-        }, 800);
+        }, 1000);
     } catch {
         showAlert('Tidak dapat terhubung ke server backend.');
     } finally {
         btn.disabled = false;
-        btn.innerHTML = `<span>Masuk Sekarang</span><svg class="btn-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m9 5 7 7-7 7"/></svg>`;
+        btn.textContent = 'Masuk';
     }
 });
+
+// Tombol aksi di pojok kanan bawah foto.
+const btnFullscreen = document.getElementById('btnFullscreen');
+const btnRefresh = document.getElementById('btnRefresh');
+
+btnFullscreen?.addEventListener('click', () => {
+    if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen?.().catch(() => {});
+    } else {
+        document.exitFullscreen?.();
+    }
+});
+
+btnRefresh?.addEventListener('click', () => window.location.reload());
