@@ -16,6 +16,7 @@ $pageDate = date('d M Y');
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= htmlspecialchars($title ?? 'Admin') ?> | KelolaGym</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%23ff8a3d'/%3E%3Cstop offset='100%25' stop-color='%23ff6a00'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='32' height='32' rx='8' fill='url(%23g)'/%3E%3Cg transform='translate(4,4)' fill='none' stroke='%23ffffff' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M7 12h10M3 9v6m4-9v12M17 6v12m4-9v6M3 12h4m10 0h4'/%3E%3C/g%3E%3C/svg%3E">
     <link rel="stylesheet" href="style.css?v=<?= @filemtime('style.css') ?: time() ?>">
 </head>
 <body>

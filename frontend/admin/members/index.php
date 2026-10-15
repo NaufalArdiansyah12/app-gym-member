@@ -51,7 +51,7 @@ ob_start();
             <option value="pria">Pria</option>
             <option value="wanita">Wanita</option>
         </select>
-        <button class="soft-button demo-action" type="button">⇩ Export</button>
+        <!-- <button class="soft-button demo-action" type="button">⇩ Export</button> -->
     </div>
 
     <div class="table-wrap">

@@ -15,6 +15,10 @@ require_once __DIR__ . '/controllers/user/UserDashboardController.php';
 require_once __DIR__ . '/controllers/user/UserAttendanceController.php';
 require_once __DIR__ . '/controllers/user/UserMembershipController.php';
 
+// 0. Environment & Database Configuration Tests
+assert(function_exists('loadEnv'), 'loadEnv function must exist');
+assert(getenv('DB_NAME') === 'db-kelola-gym', 'DB_NAME must be loaded from .env');
+
 // 1. AuthController Tests
 assert(class_exists('AuthController'), 'AuthController class not found');
 assert(method_exists('AuthController', 'login'), 'AuthController::login method not found');
