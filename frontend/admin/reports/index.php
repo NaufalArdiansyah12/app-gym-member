@@ -34,6 +34,14 @@ ob_start();
         </form>
 
         <div class="filter-actions">
+            <button id="btnExportPdf" class="soft-button" type="button" title="Export laporan periode ke PDF">
+                <svg class="icon icon-sm" aria-hidden="true" focusable="false"><use href="#icon-download"/></svg>
+                Export PDF
+            </button>
+            <button id="btnExportExcel" class="soft-button btn-excel" type="button" title="Export laporan periode ke Excel (.xlsx)">
+                <svg class="icon icon-sm" aria-hidden="true" focusable="false"><use href="#icon-download"/></svg>
+                Export Excel
+            </button>
             <button id="btnPrintReport" class="soft-button" type="button" title="Cetak laporan">
                 <svg class="icon icon-sm" aria-hidden="true" focusable="false"><use href="#icon-printer"/></svg>
                 Cetak

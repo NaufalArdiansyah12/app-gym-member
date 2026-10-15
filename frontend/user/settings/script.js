@@ -92,13 +92,18 @@ function showToast(message) {
 }
 
 // Form Elements
-const profileForm = document.getElementById('profileForm');
 const inputName = document.getElementById('inputName');
 const inputMemberCode = document.getElementById('inputMemberCode');
 const inputPhone = document.getElementById('inputPhone');
 const inputGender = document.getElementById('inputGender');
 const inputEmergency = document.getElementById('inputEmergency');
-const btnSaveProfile = document.getElementById('btnSaveProfile');
+
+const formatGender = (g) => {
+    const v = String(g || '').toLowerCase();
+    if (v === 'wanita') return 'Wanita (Perempuan)';
+    if (v === 'pria') return 'Pria (Laki-laki)';
+    return '-';
+};
 
 const passwordForm = document.getElementById('passwordForm');
 const inputCurrentPassword = document.getElementById('inputCurrentPassword');
@@ -144,7 +149,7 @@ async function loadUserProfile() {
         inputName.value = u.name || '';
         inputMemberCode.value = u.member_code || '';
         inputPhone.value = u.phone || '';
-        inputGender.value = (u.gender || 'pria').toLowerCase();
+        inputGender.value = formatGender(u.gender);
         inputEmergency.value = u.emergency_contact || '';
 
         // Populate Identity Card
@@ -171,64 +176,12 @@ async function loadUserProfile() {
         inputName.value = user.name || '';
         inputMemberCode.value = user.member_code || '';
         inputPhone.value = user.phone || '';
-        inputGender.value = (user.gender || 'pria').toLowerCase();
+        inputGender.value = formatGender(user.gender);
         inputEmergency.value = user.emergency_contact || '';
     }
 }
 
-// Handle Update Profile Form Submit
-profileForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-
-    const name = inputName.value.trim();
-    if (!name) {
-        showToast('Nama lengkap wajib diisi.');
-        return;
-    }
-
-    btnSaveProfile.disabled = true;
-    btnSaveProfile.innerHTML = 'Menyimpan…';
-
-    try {
-        const payload = {
-            name: name,
-            phone: inputPhone.value.trim(),
-            gender: inputGender.value,
-            emergency_contact: inputEmergency.value.trim(),
-        };
-
-        const headers = {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-        };
-        if (user.id) headers['X-User-Id'] = String(user.id);
-
-        const res = await fetch(getApiUrl('user/profile'), {
-            method: 'POST',
-            headers,
-            body: JSON.stringify(payload),
-        });
-
-        const json = await res.json();
-        if (!res.ok || json.error) {
-            throw new Error(json.error || 'Gagal menyimpan profil');
-        }
-
-        if (json.data && json.data.user) {
-            user = { ...user, ...json.data.user };
-            localStorage.setItem('user', JSON.stringify(user));
-            updateShellIdentity(user.name, user.member_code);
-        }
-
-        showToast(json.message || 'Profil berhasil diperbarui!');
-    } catch (err) {
-        console.error('Save profile error:', err);
-        showToast(err.message || 'Gagal menyimpan perubahan profil.');
-    } finally {
-        btnSaveProfile.disabled = false;
-        btnSaveProfile.innerHTML = '<svg class="icon icon-sm" aria-hidden="true" focusable="false"><use href="#icon-check"/></svg> Simpan Perubahan Profil';
-    }
-});
+// Data diri tidak dapat diubah member; hanya kata sandi (panel keamanan) yang bisa diubah sendiri.
 
 // Modal Password Result Elements
 const modalPasswordResult = document.getElementById('modalPasswordResult');

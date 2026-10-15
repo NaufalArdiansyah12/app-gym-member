@@ -6,14 +6,19 @@ USE `db-kelola-gym`;
 CREATE TABLE IF NOT EXISTS users (
     id INT AUTO_INCREMENT PRIMARY KEY,
     member_code VARCHAR(30) UNIQUE,
+    nik VARCHAR(20) NULL UNIQUE,
     name VARCHAR(100) NOT NULL,
     email VARCHAR(100) NULL UNIQUE,
     password VARCHAR(255) NOT NULL,
+    password_plain VARCHAR(50) NULL, -- ponytail: password asli disimpan agar admin bisa membagikan ke member; ganti ke reset-token bila keamanan ketat dibutuhkan
     role ENUM('admin', 'user') NOT NULL DEFAULT 'user',
     phone VARCHAR(20),
     gender ENUM('pria', 'wanita'),
+    tempat_lahir VARCHAR(50) NULL,
+    tanggal_lahir DATE NULL,
     address TEXT,
     emergency_contact VARCHAR(30),
+    foto VARCHAR(255) NULL,
     membership_status ENUM('active', 'inactive', 'expired') NOT NULL DEFAULT 'inactive',
     membership_expires_at DATE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP

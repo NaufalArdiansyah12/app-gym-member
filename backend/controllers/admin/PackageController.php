@@ -108,12 +108,15 @@ class PackageController {
 
         if ($namaPaket === '') {
             AdminController::error('Nama paket wajib diisi', 422);
+            return;
         }
         if ($durasiHari <= 0) {
             AdminController::error('Durasi hari wajib lebih dari 0', 422);
+            return;
         }
         if ($harga <= 0) {
             AdminController::error('Harga wajib lebih dari 0', 422);
+            return;
         }
 
         $stmt = $db->prepare("
@@ -152,6 +155,7 @@ class PackageController {
 
         if (!$pkg) {
             AdminController::error('Paket tidak ditemukan', 404);
+            return;
         }
 
         $namaPaket = trim($input['nama_paket'] ?? $pkg['nama_paket']);
@@ -162,12 +166,15 @@ class PackageController {
 
         if ($namaPaket === '') {
             AdminController::error('Nama paket tidak boleh kosong', 422);
+            return;
         }
         if ($durasiHari <= 0) {
             AdminController::error('Durasi hari harus lebih dari 0', 422);
+            return;
         }
         if ($harga < 0) {
             AdminController::error('Harga tidak boleh negatif', 422);
+            return;
         }
 
         $upStmt = $db->prepare("
@@ -210,6 +217,7 @@ class PackageController {
                 'status'  => 'success',
                 'message' => 'Paket telah dinonaktifkan (tersedia = false) karena memiliki riwayat langganan.',
             ]);
+            return;
         }
 
         $delStmt = $db->prepare("DELETE FROM paket WHERE id = ?");

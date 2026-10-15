@@ -45,6 +45,26 @@ ob_start();
 
     <!-- Grid Profil & Status Membership -->
     <div class="detail-main-grid">
+        <!-- Kolom Foto Verifikasi -->
+        <article class="panel info-panel">
+            <div class="panel-heading">
+                <div>
+                    <h2>Foto Verifikasi</h2>
+                    <p class="muted">Foto setengah badan untuk verifikasi identitas</p>
+                </div>
+            </div>
+            <div class="detail-photo-holder">
+                <img id="detailPhoto" class="detail-photo-img" alt="Foto Verifikasi Member" style="display: none;">
+                <div id="detailPhotoEmpty" class="detail-photo-empty">
+                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="7" r="4"/>
+                        <path d="M5.5 21a8.38 8.38 0 0 1 13 0"/>
+                    </svg>
+                    <small>Belum ada foto</small>
+                </div>
+            </div>
+        </article>
+
         <!-- Kolom Profil -->
         <article class="panel info-panel">
             <div class="panel-heading">
@@ -54,6 +74,14 @@ ob_start();
                 </div>
             </div>
             <div class="info-list">
+                <div class="info-item">
+                    <span class="info-label">NIK (KTP)</span>
+                    <span class="info-value" id="detailNik" style="font-family: monospace; color: #ff9142;">-</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Tempat, Tgl Lahir</span>
+                    <span class="info-value" id="detailBirth">-</span>
+                </div>
                 <div class="info-item">
                     <span class="info-label">Nomor WhatsApp / HP</span>
                     <span class="info-value" id="detailPhone">-</span>

@@ -227,6 +227,48 @@ input:focus {
     box-shadow: 0 0 0 3px rgba(255, 122, 26, 0.25);
 }
 
+.password-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: 100%;
+}
+
+.password-wrapper input {
+    padding-right: 2.75rem;
+}
+
+.password-toggle {
+    position: absolute;
+    right: 0.6rem;
+    top: 50%;
+    transform: translateY(-50%);
+    background: transparent;
+    border: none;
+    padding: 0.35rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #9ca3af;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: color 160ms ease;
+}
+
+.password-toggle:hover {
+    color: #ff7a1a;
+}
+
+.password-toggle:focus-visible {
+    outline: 2px solid #ff7a1a;
+    outline-offset: 1px;
+}
+
+.password-toggle svg {
+    width: 1.15rem;
+    height: 1.15rem;
+}
+
 .btn-login {
     width: 100%;
     margin-top: 0.7rem;

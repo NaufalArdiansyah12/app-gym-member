@@ -158,6 +158,13 @@ class UserController {
     public static function updateProfile(): void {
         $db = getDB();
         $user = self::getAuthenticatedUser($db);
+
+        // Data diri member hanya boleh diubah oleh admin (via /api/admin/members/{id}).
+        if (($user['role'] ?? '') !== 'admin') {
+            self::error('Data diri hanya dapat diubah oleh admin.', 403);
+            return;
+        }
+
         $input = self::getInput();
 
         $name = trim($input['name'] ?? '');

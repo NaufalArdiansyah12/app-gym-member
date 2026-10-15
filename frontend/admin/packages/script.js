@@ -42,20 +42,25 @@ function initAdminPackages(user) {
 
     // DOM Elements
     const packageGrid = document.getElementById('packageGrid');
-    const modalEditPackage = document.getElementById('modalEditPackage');
+    const btnOpenAddPackage = document.getElementById('btnOpenAddPackage');
+    const modalPackage = document.getElementById('modalPackage');
+    const modalPackageTitle = document.getElementById('modalPackageTitle');
+    const modalPackageSubtitle = document.getElementById('modalPackageSubtitle');
     const btnCloseModal = document.getElementById('btnCloseModal');
     const btnCancelModal = document.getElementById('btnCancelModal');
-    const formEditPackage = document.getElementById('formEditPackage');
+    const formPackage = document.getElementById('formPackage');
     const btnSubmitPackage = document.getElementById('btnSubmitPackage');
     const toast = document.getElementById('toast');
 
-    // Inputs
-    const editPackageId = document.getElementById('editPackageId');
-    const editPackageName = document.getElementById('editPackageName');
-    const editPackagePrice = document.getElementById('editPackagePrice');
-    const editPackageDuration = document.getElementById('editPackageDuration');
-    const editPackageBenefits = document.getElementById('editPackageBenefits');
-    const editPackageStatus = document.getElementById('editPackageStatus');
+    // Inputs & Presets
+    const packageId = document.getElementById('packageId');
+    const packageName = document.getElementById('packageName');
+    const packagePrice = document.getElementById('packagePrice');
+    const packageDuration = document.getElementById('packageDuration');
+    const packageBenefits = document.getElementById('packageBenefits');
+    const packageStatus = document.getElementById('packageStatus');
+    const durationPresets = document.getElementById('durationPresets');
+    const durationHint = document.getElementById('durationHint');
 
     let toastTimer;
     let packagesData = [];
@@ -88,35 +93,169 @@ function initAdminPackages(user) {
 
     // Modal Handlers
     function openModal() {
-        if (!modalEditPackage) return;
-        modalEditPackage.classList.add('is-active');
-        modalEditPackage.setAttribute('aria-hidden', 'false');
+        if (!modalPackage) return;
+        modalPackage.classList.add('is-active');
+        modalPackage.setAttribute('aria-hidden', 'false');
         document.body.style.overflow = 'hidden';
-        editPackageName?.focus();
     }
 
     function closeModal() {
-        if (!modalEditPackage) return;
-        modalEditPackage.classList.remove('is-active');
-        modalEditPackage.setAttribute('aria-hidden', 'true');
+        if (!modalPackage) return;
+        modalPackage.classList.remove('is-active');
+        modalPackage.setAttribute('aria-hidden', 'true');
         document.body.style.overflow = '';
-        formEditPackage?.reset();
+        formPackage?.reset();
     }
 
     btnCloseModal?.addEventListener('click', closeModal);
     btnCancelModal?.addEventListener('click', closeModal);
 
-    modalEditPackage?.addEventListener('click', (e) => {
-        if (e.target === modalEditPackage) closeModal();
+    modalPackage?.addEventListener('click', (e) => {
+        if (e.target === modalPackage) closeModal();
     });
 
     document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && modalEditPackage?.classList.contains('is-active')) {
+        if (e.key === 'Escape' && modalPackage?.classList.contains('is-active')) {
             closeModal();
         }
     });
 
-    // Populate and open edit form
+    // Durasi Helper & Sinkronisasi
+    function updateDurationHint(days) {
+        if (!durationHint) return;
+        const d = Number(days) || 0;
+        if (d <= 0) {
+            durationHint.textContent = 'Durasi hari wajib lebih dari 0.';
+        } else if (d % 30 === 0) {
+            const m = d / 30;
+            durationHint.textContent = `Dihitung otomatis: ${d} hari = ${m} bulan membership`;
+        } else {
+            const approx = (d / 30).toFixed(1);
+            durationHint.textContent = `${d} hari membership (sekitar ${approx} bulan)`;
+        }
+    }
+
+    function syncPresetFromDays(days) {
+        if (!durationPresets) return;
+        const targetDays = String(days);
+        let matched = false;
+
+        durationPresets.querySelectorAll('.preset-btn').forEach((btn) => {
+            if (btn.dataset.days === targetDays) {
+                btn.classList.add('active');
+                matched = true;
+            } else {
+                btn.classList.remove('active');
+            }
+        });
+
+        if (!matched) {
+            const customBtn = durationPresets.querySelector('[data-days="custom"]');
+            if (customBtn) customBtn.classList.add('active');
+        }
+    }
+
+    function detectDurationFromName(name) {
+        if (!name) return null;
+        const lower = name.toLowerCase();
+
+        // 1. Tahun
+        const yr = lower.match(/(\d+)\s*(?:tahun|thn|year)/);
+        if (yr) return parseInt(yr[1], 10) * 360;
+
+        // 2. Bulan
+        const mo = lower.match(/(\d+)\s*(?:bulan|bln|month)/);
+        if (mo) return parseInt(mo[1], 10) * 30;
+
+        // 3. Hari
+        const dy = lower.match(/(\d+)\s*(?:hari|day)/);
+        if (dy) return parseInt(dy[1], 10);
+
+        return null;
+    }
+
+    // Klik tombol preset durasi (1 Bulan, 2 Bulan, 3 Bulan, dll.)
+    durationPresets?.addEventListener('click', (e) => {
+        const btn = e.target.closest('.preset-btn');
+        if (!btn) return;
+
+        durationPresets.querySelectorAll('.preset-btn').forEach((b) => b.classList.remove('active'));
+        btn.classList.add('active');
+
+        if (btn.dataset.days === 'custom') {
+            packageDuration?.focus();
+            packageDuration?.select();
+            updateDurationHint(parseInt(packageDuration.value, 10) || 0);
+        } else {
+            const days = parseInt(btn.dataset.days, 10);
+            const months = btn.dataset.months;
+            if (packageDuration) packageDuration.value = days;
+            updateDurationHint(days);
+
+            // Auto sesuaikan nama paket jika masih kosong atau berpola standar
+            if (packageName) {
+                const currentName = packageName.value.trim();
+                const isDefaultPattern = currentName === '' || /^Paket\s+(\d+\s*(?:Bulan|Hari)|1\s*Tahun)/i.test(currentName);
+                if (isDefaultPattern) {
+                    packageName.value = months === '12' ? 'Paket 12 Bulan (1 Tahun)' : `Paket ${months} Bulan`;
+                }
+            }
+        }
+    });
+
+    // Ketik durasi hari langsung -> sinkronkan hint dan preset
+    packageDuration?.addEventListener('input', () => {
+        const days = parseInt(packageDuration.value, 10) || 0;
+        updateDurationHint(days);
+        syncPresetFromDays(days);
+
+        // Jika nama paket masih kosong / standar, otomatis sesuaikan nama
+        if (days > 0 && days % 30 === 0 && packageName) {
+            const currentName = packageName.value.trim();
+            const isDefaultPattern = currentName === '' || /^Paket\s+\d+\s*Bulan/i.test(currentName);
+            if (isDefaultPattern) {
+                packageName.value = `Paket ${days / 30} Bulan`;
+            }
+        }
+    });
+
+    // Ketik nama paket -> deteksi kata seperti "2 bulan" otomatis sesuaikan hari
+    packageName?.addEventListener('input', () => {
+        // Hanya auto-detect jika user sedang menambah paket baru
+        if (!packageId?.value) {
+            const detected = detectDurationFromName(packageName.value);
+            if (detected && packageDuration) {
+                packageDuration.value = detected;
+                updateDurationHint(detected);
+                syncPresetFromDays(detected);
+            }
+        }
+    });
+
+    // Buka Modal Tambah Paket
+    function openAddModal() {
+        if (modalPackageTitle) modalPackageTitle.textContent = 'Tambah Paket Langganan Baru';
+        if (modalPackageSubtitle) modalPackageSubtitle.textContent = 'Atur nama paket, durasi hari, harga, dan benefit fasilitas.';
+        if (btnSubmitPackage) btnSubmitPackage.textContent = 'Tambah Paket Baru';
+
+        if (packageId) packageId.value = '';
+        if (packageName) packageName.value = 'Paket 2 Bulan';
+        if (packagePrice) packagePrice.value = '';
+        if (packageDuration) packageDuration.value = '60';
+        if (packageBenefits) {
+            packageBenefits.value = 'Akses seluruh area fitness & cardio\nFree locker room & shower bersih\n1x Sesi konsultasi instruktur';
+        }
+        if (packageStatus) packageStatus.value = '1';
+
+        syncPresetFromDays(60);
+        updateDurationHint(60);
+        openModal();
+        packagePrice?.focus();
+    }
+
+    btnOpenAddPackage?.addEventListener('click', openAddModal);
+
+    // Buka Modal Edit Paket
     function editPackage(pkgId) {
         const pkg = packagesData.find((p) => p.id === Number(pkgId));
         if (!pkg) {
@@ -124,14 +263,46 @@ function initAdminPackages(user) {
             return;
         }
 
-        editPackageId.value = pkg.id;
-        editPackageName.value = pkg.nama_paket || '';
-        editPackagePrice.value = Math.round(pkg.harga || 0);
-        editPackageDuration.value = pkg.durasi_hari || 30;
-        editPackageBenefits.value = pkg.benefit || '';
-        editPackageStatus.value = pkg.tersedia ? '1' : '0';
+        if (modalPackageTitle) modalPackageTitle.textContent = 'Edit Paket Langganan';
+        if (modalPackageSubtitle) modalPackageSubtitle.textContent = 'Ubah nama paket, harga, durasi, dan daftar benefit fasilitas.';
+        if (btnSubmitPackage) btnSubmitPackage.textContent = 'Simpan Perubahan';
 
+        if (packageId) packageId.value = pkg.id;
+        if (packageName) packageName.value = pkg.nama_paket || '';
+        if (packagePrice) packagePrice.value = Math.round(pkg.harga || 0);
+        if (packageDuration) packageDuration.value = pkg.durasi_hari || 30;
+        if (packageBenefits) packageBenefits.value = pkg.benefit || '';
+        if (packageStatus) packageStatus.value = pkg.tersedia ? '1' : '0';
+
+        syncPresetFromDays(pkg.durasi_hari || 30);
+        updateDurationHint(pkg.durasi_hari || 30);
         openModal();
+        packageName?.focus();
+    }
+
+    // Hapus Paket Langganan
+    async function deletePackage(pkgId, pkgName) {
+        const confirmed = window.confirm(`Apakah Anda yakin ingin menghapus paket "${pkgName}"?`);
+        if (!confirmed) return;
+
+        try {
+            const res = await fetch(getApiUrl(`admin/packages/${pkgId}`), {
+                method: 'DELETE',
+                credentials: 'same-origin',
+                headers: { 'Accept': 'application/json' },
+            });
+            const result = await res.json();
+
+            if (!res.ok || result.status !== 'success') {
+                throw new Error(result.error || result.message || 'Gagal menghapus paket');
+            }
+
+            showToast(result.message || `Paket "${pkgName}" berhasil dihapus`);
+            await loadPackages();
+        } catch (err) {
+            console.error('Error deletePackage:', err);
+            showToast(err.message, true);
+        }
     }
 
     // Render Cards
@@ -155,21 +326,28 @@ function initAdminPackages(user) {
             const isPopular = Boolean(pkg.is_popular);
 
             let tierClass = 'tier-starter';
-            let tierBadge = `STARTER · ${months} BULAN`;
+            let tierBadge = `STARTER · ${durasi % 30 === 0 ? months + ' BULAN' : durasi + ' HARI'}`;
             let tierSubtitle = 'Pilihan fleksibel bagi pemula untuk adaptasi latihan harian.';
             let equivalentText = `Rp ${formatRupiah(pkg.harga)} / bulan`;
 
             if (isPopular) {
                 tierClass = 'tier-popular';
-                tierBadge = `POPULER · ${months} BULAN`;
+                tierBadge = `POPULER · ${durasi % 30 === 0 ? months + ' BULAN' : durasi + ' HARI'}`;
                 tierSubtitle = 'Paket terlaris dengan total peminat terbanyak saat ini.';
                 equivalentText = months > 1 ? `Setara Rp ${formatRupiah(perMonth)} / bulan` : equivalentText;
-            } else if (durasi >= 180 || pkg.nama_paket.toLowerCase().includes('6 bulan')) {
+            } else if (durasi === 60 || pkg.nama_paket.toLowerCase().includes('2 bulan')) {
+                tierClass = 'tier-regular';
+                tierBadge = `ROUTINE · 2 BULAN`;
+                tierSubtitle = 'Paket 2 bulan optimal untuk pembentukan kebiasaan latihan konsisten.';
+                equivalentText = `Setara Rp ${formatRupiah(perMonth)} / bulan`;
+            } else if (durasi >= 180 || pkg.nama_paket.toLowerCase().includes('6 bulan') || pkg.nama_paket.toLowerCase().includes('12 bulan') || pkg.nama_paket.toLowerCase().includes('tahun')) {
                 tierClass = 'tier-vip';
-                tierBadge = `VIP PRO · ${months} BULAN`;
+                tierBadge = `VIP PRO · ${durasi % 30 === 0 ? months + ' BULAN' : durasi + ' HARI'}`;
                 tierSubtitle = 'Pilihan hemat bernilai tinggi untuk komitmen jangka panjang.';
                 equivalentText = `Setara Rp ${formatRupiah(perMonth)} / bulan (Hemat)`;
             } else if (months > 1) {
+                tierBadge = `STANDARD · ${durasi % 30 === 0 ? months + ' BULAN' : durasi + ' HARI'}`;
+                tierSubtitle = 'Paket membership pilihan untuk hasil kebugaran optimal.';
                 equivalentText = `Setara Rp ${formatRupiah(perMonth)} / bulan`;
             }
 
@@ -222,7 +400,7 @@ function initAdminPackages(user) {
                         <div class="price-equivalent">${escapeHtml(equivalentText)}</div>
                         <div class="duration-chip">
                             <svg class="icon" aria-hidden="true" focusable="false"><use href="#icon-package"/></svg>
-                            <span>Durasi Keanggotaan: <strong>${durasi} Hari</strong></span>
+                            <span>Durasi Keanggotaan: <strong>${durasi} Hari${durasi % 30 === 0 ? ` (${months} Bulan)` : ''}</strong></span>
                         </div>
                     </div>
 
@@ -240,20 +418,34 @@ function initAdminPackages(user) {
                             </span>
                             <span>ID Paket: #${pkg.id}</span>
                         </div>
-                        <button class="btn-pro-edit" type="button" data-id="${pkg.id}">
-                            ✎ Edit Paket
-                        </button>
+                        <div class="card-actions-group">
+                            <button class="btn-pro-edit" type="button" data-id="${pkg.id}">
+                                ✎ Edit Paket
+                            </button>
+                            <button class="btn-pro-delete" type="button" data-id="${pkg.id}" data-name="${escapeHtml(pkg.nama_paket)}" title="Hapus Paket">
+                                <svg class="icon" aria-hidden="true" focusable="false"><use href="#icon-trash"/></svg>
+                            </button>
+                        </div>
                     </div>
                 </article>
             `;
         }).join('');
 
-        // Attach edit button listeners
+        // Attach event listeners
         packageGrid.querySelectorAll('.btn-pro-edit').forEach((btn) => {
             btn.addEventListener('click', (e) => {
                 e.stopPropagation();
                 const id = btn.getAttribute('data-id');
                 editPackage(id);
+            });
+        });
+
+        packageGrid.querySelectorAll('.btn-pro-delete').forEach((btn) => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const id = btn.getAttribute('data-id');
+                const name = btn.getAttribute('data-name');
+                deletePackage(id, name);
             });
         });
     }
@@ -298,29 +490,32 @@ function initAdminPackages(user) {
         }
     }
 
-    // Submit Edit Form to Backend
-    formEditPackage?.addEventListener('submit', async (e) => {
+    // Submit Form (Tambah / Edit) to Backend
+    formPackage?.addEventListener('submit', async (e) => {
         e.preventDefault();
 
-        const id = editPackageId.value;
-        if (!id) return;
+        const id = packageId?.value ? parseInt(packageId.value, 10) : null;
+        const isEdit = Boolean(id);
 
         const payload = {
-            nama_paket: editPackageName.value.trim(),
-            harga: parseFloat(editPackagePrice.value) || 0,
-            durasi_hari: parseInt(editPackageDuration.value, 10) || 30,
-            benefit: editPackageBenefits.value.trim(),
-            tersedia: editPackageStatus.value === '1' ? 1 : 0,
+            nama_paket: packageName.value.trim(),
+            harga: parseFloat(packagePrice.value) || 0,
+            durasi_hari: parseInt(packageDuration.value, 10) || 30,
+            benefit: packageBenefits.value.trim(),
+            tersedia: packageStatus.value === '1' ? 1 : 0,
         };
 
         if (btnSubmitPackage) {
             btnSubmitPackage.disabled = true;
-            btnSubmitPackage.textContent = 'Menyimpan...';
+            btnSubmitPackage.textContent = isEdit ? 'Menyimpan...' : 'Menambahkan...';
         }
 
         try {
-            const res = await fetch(getApiUrl(`admin/packages/${id}`), {
-                method: 'PUT',
+            const endpoint = isEdit ? `admin/packages/${id}` : 'admin/packages';
+            const method = isEdit ? 'PUT' : 'POST';
+
+            const res = await fetch(getApiUrl(endpoint), {
+                method: method,
                 credentials: 'same-origin',
                 headers: {
                     'Content-Type': 'application/json',
@@ -332,11 +527,11 @@ function initAdminPackages(user) {
             const result = await res.json();
 
             if (!res.ok || result.status !== 'success') {
-                throw new Error(result.error || result.message || 'Gagal menyimpan perubahan paket');
+                throw new Error(result.error || result.message || 'Gagal memproses paket');
             }
 
             closeModal();
-            showToast(`Paket "${payload.nama_paket}" berhasil diperbarui!`);
+            showToast(result.message || (isEdit ? `Paket "${payload.nama_paket}" berhasil diperbarui!` : `Paket "${payload.nama_paket}" berhasil ditambahkan!`));
             await loadPackages();
         } catch (err) {
             console.error('Error saving package:', err);
@@ -344,7 +539,7 @@ function initAdminPackages(user) {
         } finally {
             if (btnSubmitPackage) {
                 btnSubmitPackage.disabled = false;
-                btnSubmitPackage.textContent = 'Simpan Perubahan';
+                btnSubmitPackage.textContent = isEdit ? 'Simpan Perubahan' : 'Tambah Paket Baru';
             }
         }
     });

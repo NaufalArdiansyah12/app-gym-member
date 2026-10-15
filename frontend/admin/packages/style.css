@@ -1,12 +1,31 @@
 @import url('../members/style.css');
 
-/* 3-Column Professional Grid */
+/* Toolbar di luar card daftar paket */
+.packages-toolbar {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 16px;
+    flex-wrap: wrap;
+}
+
+.packages-toolbar h2 {
+    margin: 0;
+    font-size: 15px;
+    color: #f9fafb;
+}
+
+.packages-toolbar .muted {
+    margin: 4px 0 0;
+}
+
+/* Grid maksimal 3 card per baris */
 .package-pro-grid {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 24px;
     align-items: stretch;
-    margin-top: 18px;
 }
 
 /* Loading & Empty States */
@@ -77,7 +96,23 @@
     color: #38bdf8;
 }
 
-/* Tier 2: 3 Bulan (Paling Populer - Signature Flame Amber Accent) */
+/* Tier 2: 2 Bulan (Routine / Regular - Emerald Teal Accent) */
+.tier-regular {
+    border-color: rgba(16, 185, 129, 0.32);
+}
+
+.tier-regular:hover {
+    border-color: rgba(16, 185, 129, 0.65);
+    box-shadow: 0 24px 45px rgba(16, 185, 129, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.tier-regular .tier-pill {
+    background: rgba(16, 185, 129, 0.15);
+    border: 1px solid rgba(16, 185, 129, 0.38);
+    color: #34d399;
+}
+
+/* Tier 3: 3 Bulan (Paling Populer - Signature Flame Amber Accent) */
 .tier-popular {
     border: 1.5px solid rgba(255, 122, 26, 0.65);
     background: linear-gradient(165deg, rgba(38, 30, 36, 0.9) 0%, rgba(20, 18, 28, 0.96) 100%);
@@ -121,7 +156,7 @@
     height: 13px;
 }
 
-/* Tier 3: 6 Bulan (VIP - Royal Violet Accent) */
+/* Tier 4: 6 Bulan / 1 Tahun (VIP - Royal Violet Accent) */
 .tier-vip {
     border-color: rgba(168, 85, 247, 0.32);
     background: linear-gradient(165deg, rgba(34, 27, 48, 0.9) 0%, rgba(18, 17, 28, 0.96) 100%);
@@ -182,10 +217,10 @@
 /* Card Titles */
 .pro-card-title {
     margin: 0 0 6px;
-    font-size: 1.5rem;
+    font-size: 1.45rem;
     font-weight: 800;
     color: #ffffff;
-    line-height: 1.2;
+    line-height: 1.25;
     letter-spacing: -0.01em;
 }
 
@@ -330,6 +365,17 @@
     font-weight: 800;
 }
 
+/* Card Action Row */
+.card-actions-group {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.card-actions-group .btn-pro-edit {
+    flex: 1;
+}
+
 .btn-pro-edit {
     display: flex;
     align-items: center;
@@ -368,9 +414,69 @@
     color: #ffffff;
 }
 
+.btn-pro-delete {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    border: 1px solid rgba(239, 68, 68, 0.28);
+    background: rgba(239, 68, 68, 0.08);
+    color: #f87171;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+
+.btn-pro-delete:hover {
+    background: rgba(239, 68, 68, 0.24);
+    border-color: rgba(239, 68, 68, 0.6);
+    color: #ef4444;
+    transform: translateY(-1px);
+}
+
+.btn-pro-delete svg {
+    width: 17px;
+    height: 17px;
+}
+
 /* Modal Form Enhancements */
 .modal-dialog-package {
     max-width: 580px;
+}
+
+/* Preset Buttons for Quick Duration Selection */
+.duration-presets {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 6px;
+}
+
+.preset-btn {
+    padding: 8px 12px;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    background: rgba(255, 255, 255, 0.04);
+    color: #94a3b8;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.18s ease;
+}
+
+.preset-btn:hover {
+    background: rgba(255, 122, 26, 0.12);
+    border-color: rgba(255, 122, 26, 0.35);
+    color: #ff9d42;
+}
+
+.preset-btn.active {
+    background: linear-gradient(135deg, rgba(255, 122, 26, 0.24) 0%, rgba(234, 88, 12, 0.24) 100%);
+    border-color: #ff7a1a;
+    color: #ff9d42;
+    box-shadow: 0 0 0 1px #ff7a1a, 0 4px 12px rgba(255, 122, 26, 0.2);
 }
 
 .field-help {
@@ -382,7 +488,7 @@
 
 .modal-form textarea {
     width: 100%;
-    min-height: 120px;
+    min-height: 110px;
     padding: 12px 14px;
     border: 1px solid rgba(255, 255, 255, 0.14);
     border-radius: 12px;

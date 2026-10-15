@@ -67,6 +67,18 @@ function escapeHtml(str) {
         .replace(/'/g, '&#039;');
 }
 
+// Batasi input hanya angka (strip huruf/simbol) sekaligus batasi jumlah digit.
+function attachDigitsOnly(input, maxDigits) {
+    if (!input) return;
+    input.addEventListener('input', () => {
+        const digits = input.value.replace(/\D/g, '').slice(0, maxDigits);
+        if (input.value !== digits) input.value = digits;
+    });
+}
+
+['memberNik', 'editNik'].forEach((id) => attachDigitsOnly(document.getElementById(id), 16));
+['memberPhone', 'memberEmergency', 'editPhone', 'editEmergency'].forEach((id) => attachDigitsOnly(document.getElementById(id), 13));
+
 // ==========================================
 // MODAL STATUS FEEDBACK (BERHASIL / GAGAL)
 // ==========================================
@@ -200,11 +212,21 @@ function renderMemberTable() {
     if (pageMembers.length === 0) {
         memberTableBody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--color-muted, #888); padding: 2rem;">Tidak ada data member yang sesuai filter</td></tr>';
     } else {
-        memberTableBody.innerHTML = pageMembers.map(m => `
+        memberTableBody.innerHTML = pageMembers.map(m => {
+            const photoHtml = `<div class="member-table-avatar">${escapeHtml((m.name || 'M').charAt(0).toUpperCase())}</div>`;
+
+            return `
             <tr data-id="${m.id}">
                 <td>
-                    <button type="button" class="btn-show-detail-trigger" data-id="${m.id}" style="background:none; border:none; padding:0; color:#fff; font-weight:700; cursor:pointer; text-align:left; font:inherit; transition: color 150ms ease;" onmouseover="this.style.color='#ff7a1a'" onmouseout="this.style.color='#fff'">${escapeHtml(m.name)}</button>
-                    <small style="display:block; color:#ff9142; font-family:monospace; margin-top:2px;">${escapeHtml(m.member_code)}</small>
+                    <div class="member-cell-profile">
+                        ${photoHtml}
+                        <div>
+                            <button type="button" class="btn-show-detail-trigger" data-id="${m.id}" style="background:none; border:none; padding:0; color:#fff; font-weight:700; cursor:pointer; text-align:left; font:inherit; transition: color 150ms ease;" onmouseover="this.style.color='#ff7a1a'" onmouseout="this.style.color='#fff'">${escapeHtml(m.name)}</button>
+                            <small style="display:block; color:#ff9142; font-family:monospace; margin-top:2px;">
+                                ${escapeHtml(m.member_code)}${m.nik && m.nik !== '-' ? ` · <span style="color:#9ca3af; font-family:sans-serif;">NIK: ${escapeHtml(m.nik)}</span>` : ''}
+                            </small>
+                        </div>
+                    </div>
                 </td>
                 <td>${escapeHtml(m.phone)}</td>
                 <td><span class="status ${escapeHtml(m.gender_badge_class)}">${escapeHtml(m.gender_label)}</span></td>
@@ -218,13 +240,17 @@ function renderMemberTable() {
                         <button class="icon-button btn-edit-member" type="button" data-id="${m.id}" title="Edit profil member">
                             <svg class="icon" aria-hidden="true" focusable="false"><use href="#icon-edit"/></svg>
                         </button>
+                        <button class="icon-button btn-manage-password" type="button" data-id="${m.id}" title="Lihat / reset password member">
+                            <svg class="icon" aria-hidden="true" focusable="false"><use href="#icon-refresh"/></svg>
+                        </button>
                         <button class="icon-button btn-delete-member" type="button" data-id="${m.id}" data-name="${escapeHtml(m.name)}" title="Hapus member">
                             <svg class="icon" aria-hidden="true" focusable="false"><use href="#icon-trash"/></svg>
                         </button>
                     </div>
                 </td>
             </tr>
-        `).join('');
+        `;
+        }).join('');
 
         // Pasang event klik untuk buka modal detail
         memberTableBody.querySelectorAll('.btn-show-detail-trigger').forEach(btn => {
@@ -243,6 +269,15 @@ function renderMemberTable() {
                 if (member) {
                     openEditModal(member);
                 }
+            });
+        });
+
+        // Pasang event kelola password
+        memberTableBody.querySelectorAll('.btn-manage-password').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const member = allMembers.find(item => item.id == btn.dataset.id);
+                if (member) openPasswordModal(member);
             });
         });
 
@@ -349,6 +384,13 @@ async function openDetailModal(id) {
     document.getElementById('mdBadge').className = 'status muted-bg';
     document.getElementById('mdCode').textContent = 'GYM-...';
     document.getElementById('mdCreatedAt').textContent = '-';
+    const loadPhotoEl = document.getElementById('mdPhoto');
+    const loadPhotoEmptyEl = document.getElementById('mdPhotoEmpty');
+    if (loadPhotoEl) {
+        loadPhotoEl.removeAttribute('src');
+        loadPhotoEl.style.display = 'none';
+    }
+    if (loadPhotoEmptyEl) loadPhotoEmptyEl.style.display = 'flex';
     document.getElementById('mdTableAttBody').innerHTML = '<tr><td colspan="2" class="table-empty">Memuat riwayat presensi...</td></tr>';
 
     try {
@@ -364,8 +406,25 @@ async function openDetailModal(id) {
         const { member, stats, attendances } = json.data;
         activeDetailMember = member;
 
-        // Header Profil
-        document.getElementById('mdAvatar').textContent = member.initials || 'M';
+        // Header Profil: selalu inisial (foto member hanya untuk verifikasi, bukan foto profil)
+        const avatarEl = document.getElementById('mdAvatar');
+        avatarEl.textContent = member.initials || 'M';
+
+        // Foto Verifikasi Member (setengah badan)
+        const photoEl = document.getElementById('mdPhoto');
+        const photoEmptyEl = document.getElementById('mdPhotoEmpty');
+        if (photoEl && photoEmptyEl) {
+            if (member.foto) {
+                photoEl.src = `../../${member.foto}`;
+                photoEl.style.display = 'block';
+                photoEmptyEl.style.display = 'none';
+            } else {
+                photoEl.removeAttribute('src');
+                photoEl.style.display = 'none';
+                photoEmptyEl.style.display = 'flex';
+            }
+        }
+
         document.getElementById('modalDetailName').textContent = member.name;
         const badgeEl = document.getElementById('mdBadge');
         badgeEl.textContent = member.gender_label || (member.gender === 'wanita' ? 'Wanita' : 'Pria');
@@ -373,13 +432,37 @@ async function openDetailModal(id) {
         document.getElementById('mdCode').textContent = member.member_code;
         document.getElementById('mdCreatedAt').textContent = member.created_at_formatted || '-';
 
-        // Data Pribadi & Kontak
+        // Data Identitas KTP
+        const elNik = document.getElementById('mdNik');
+        if (elNik) elNik.textContent = member.nik && member.nik !== '-' ? member.nik : '-';
+
+        const elBirth = document.getElementById('mdBirth');
+        if (elBirth) {
+            const birthParts = [];
+            if (member.tempat_lahir && member.tempat_lahir !== '-') birthParts.push(member.tempat_lahir);
+            if (member.tanggal_lahir_formatted && member.tanggal_lahir_formatted !== '-') birthParts.push(member.tanggal_lahir_formatted);
+            elBirth.textContent = birthParts.length > 0 ? birthParts.join(', ') : '-';
+        }
+
+        const elAddress = document.getElementById('mdAddress');
+        if (elAddress) elAddress.textContent = member.address && member.address !== '-' ? member.address : '-';
+
+        // Data Kontak & Akun
         document.getElementById('mdPhone').textContent = member.phone || '-';
         document.getElementById('mdGender').textContent = member.gender_label || (member.gender === 'wanita' ? 'Wanita' : 'Pria');
         document.getElementById('mdEmergency').textContent = member.emergency_contact || '-';
 
         // Informasi Akun & Presensi
         document.getElementById('mdInfoCode').textContent = member.member_code;
+
+        // Password (ditampilkan tersamarkan, tombol lihat/reset ada di samping)
+        const elPw = document.getElementById('mdPassword');
+        if (elPw) {
+            const pw = member.password_plain || '';
+            elPw.dataset.value = pw;
+            elPw.dataset.revealed = '0';
+            elPw.textContent = pw ? MASK : '-';
+        }
         const infoPkgEl = document.getElementById('mdInfoPackage');
         if (infoPkgEl) {
             infoPkgEl.textContent = member.active_package_name && member.active_package_name !== 'Belum ada paket'
@@ -426,6 +509,20 @@ function closeDetailModal() {
 btnCloseModalDetail?.addEventListener('click', closeDetailModal);
 modalDetailMember?.addEventListener('click', (e) => {
     if (e.target === modalDetailMember) closeDetailModal();
+});
+
+// Toggle lihat password di modal detail
+document.getElementById('mdBtnTogglePassword')?.addEventListener('click', () => {
+    const elPw = document.getElementById('mdPassword');
+    if (!elPw || !elPw.dataset.value) return;
+    const revealed = elPw.dataset.revealed === '1';
+    elPw.textContent = revealed ? MASK : elPw.dataset.value;
+    elPw.dataset.revealed = revealed ? '0' : '1';
+});
+
+// Buka modal kelola password dari modal detail
+document.getElementById('mdBtnShowPasswordModal')?.addEventListener('click', () => {
+    if (activeDetailMember) openPasswordModal(activeDetailMember);
 });
 
 // Aksi di dalam Modal Detail
@@ -520,6 +617,114 @@ function deleteMember(id, name, fromModal = false) {
 }
 
 // ==========================================
+// MODAL PASSWORD MEMBER (LIHAT & RESET)
+// ==========================================
+const modalMemberPassword = document.getElementById('modalMemberPassword');
+const btnCloseModalPassword = document.getElementById('btnCloseModalPassword');
+const btnDonePassword = document.getElementById('btnDonePassword');
+const btnTogglePw = document.getElementById('btnTogglePw');
+const btnCopyPw = document.getElementById('btnCopyPw');
+const btnResetPassword = document.getElementById('btnResetPassword');
+const pwMemberName = document.getElementById('pwMemberName');
+const pwMemberCode = document.getElementById('pwMemberCode');
+const pwMemberValue = document.getElementById('pwMemberValue');
+const pwHint = document.getElementById('pwHint');
+
+const MASK = '••••••••';
+let activePasswordMember = null;
+let pwRevealed = false;
+
+function setPwDisplay() {
+    if (!pwMemberValue) return;
+    const pw = activePasswordMember?.password || '';
+    pwMemberValue.textContent = pw ? (pwRevealed ? pw : MASK) : '-';
+    if (pwHint) {
+        pwHint.textContent = pw
+            ? 'Member dapat login memakai Kode Member atau Email dengan password di atas.'
+            : 'Password lama tidak tersedia. Klik "Reset Password" untuk membuat password baru.';
+    }
+}
+
+function openPasswordModal(member) {
+    if (!modalMemberPassword || !member) return;
+    activePasswordMember = {
+        id: member.id,
+        name: member.name || '-',
+        member_code: member.member_code || '-',
+        password: member.password_plain || '',
+    };
+    pwRevealed = false;
+    if (pwMemberName) pwMemberName.textContent = activePasswordMember.name;
+    if (pwMemberCode) pwMemberCode.textContent = activePasswordMember.member_code;
+    setPwDisplay();
+    modalMemberPassword.classList.add('is-active');
+    modalMemberPassword.setAttribute('aria-hidden', 'false');
+    document.body.style.overflow = 'hidden';
+}
+
+function closePasswordModal() {
+    if (!modalMemberPassword) return;
+    modalMemberPassword.classList.remove('is-active');
+    modalMemberPassword.setAttribute('aria-hidden', 'true');
+    document.body.style.overflow = '';
+    activePasswordMember = null;
+}
+
+btnCloseModalPassword?.addEventListener('click', closePasswordModal);
+btnDonePassword?.addEventListener('click', closePasswordModal);
+modalMemberPassword?.addEventListener('click', (e) => {
+    if (e.target === modalMemberPassword) closePasswordModal();
+});
+
+btnTogglePw?.addEventListener('click', () => {
+    if (!activePasswordMember?.password) return;
+    pwRevealed = !pwRevealed;
+    setPwDisplay();
+});
+
+btnCopyPw?.addEventListener('click', async () => {
+    const pw = activePasswordMember?.password || '';
+    if (!pw) {
+        showToast('Tidak ada password untuk disalin');
+        return;
+    }
+    try {
+        await navigator.clipboard.writeText(pw);
+        showToast('Password disalin ke clipboard');
+    } catch {
+        showToast(`Gagal menyalin otomatis. Password: ${pw}`);
+    }
+});
+
+btnResetPassword?.addEventListener('click', async () => {
+    if (!activePasswordMember) return;
+    btnResetPassword.disabled = true;
+    try {
+        const res = await fetch(getApiUrl(`admin/members/${activePasswordMember.id}/reset-password`), {
+            method: 'POST',
+            credentials: 'same-origin',
+        });
+        const data = await res.json();
+        if (res.ok && data.data?.password) {
+            activePasswordMember.password = data.data.password;
+            pwRevealed = true;
+            setPwDisplay();
+            if (activeDetailMember && activeDetailMember.id == activePasswordMember.id) {
+                activeDetailMember.password_plain = data.data.password;
+            }
+            loadMembers();
+            showToast('Password baru berhasil dibuat');
+        } else {
+            showToast(data.error || 'Gagal mereset password');
+        }
+    } catch {
+        showToast('Gagal terhubung ke server');
+    } finally {
+        btnResetPassword.disabled = false;
+    }
+});
+
+// ==========================================
 // 3. MODAL EDIT PROFIL MEMBER (DATA ORANG)
 // ==========================================
 const modalEdit = document.getElementById('modalEdit');
@@ -532,9 +737,16 @@ function openEditModal(member) {
 
     document.getElementById('editMemberId').value = member.id;
     document.getElementById('editName').value = member.name || '';
+    if (document.getElementById('editNik')) document.getElementById('editNik').value = (member.nik && member.nik !== '-') ? member.nik : '';
+    if (document.getElementById('editBirthPlace')) document.getElementById('editBirthPlace').value = (member.tempat_lahir && member.tempat_lahir !== '-') ? member.tempat_lahir : '';
+    if (document.getElementById('editBirthDate')) document.getElementById('editBirthDate').value = member.tanggal_lahir || '';
     document.getElementById('editPhone').value = member.phone || '';
     document.getElementById('editGender').value = member.gender || 'pria';
+    if (document.getElementById('editAddress')) document.getElementById('editAddress').value = (member.address && member.address !== '-') ? member.address : '';
     document.getElementById('editEmergency').value = member.emergency_contact === '-' ? '' : (member.emergency_contact || '');
+
+    // Tampilkan foto lama (jika ada) agar bisa diganti dengan foto baru.
+    editPhoto.setExisting(member.foto ? `../../${member.foto}` : null);
 
     modalEdit.classList.add('is-active');
     modalEdit.setAttribute('aria-hidden', 'false');
@@ -543,6 +755,7 @@ function openEditModal(member) {
 
 function closeEditModal() {
     if (!modalEdit) return;
+    editPhoto.remove();
     modalEdit.classList.remove('is-active');
     modalEdit.setAttribute('aria-hidden', 'true');
     document.body.style.overflow = '';
@@ -563,10 +776,19 @@ formEdit?.addEventListener('submit', async (e) => {
     const formData = new FormData(formEdit);
     const payload = {
         name: formData.get('name'),
+        nik: formData.get('nik') ? formData.get('nik').trim() : '',
+        tempat_lahir: formData.get('tempat_lahir') ? formData.get('tempat_lahir').trim() : '',
+        tanggal_lahir: formData.get('tanggal_lahir') || undefined,
         phone: formData.get('phone'),
         gender: formData.get('gender'),
+        address: formData.get('address'),
         emergency_contact: formData.get('emergency_contact'),
     };
+
+    // Kirim foto hanya bila user mengubah/menghapus (dirty). Nilai '' = hapus foto.
+    if (editPhoto.isDirty()) {
+        payload.foto = editPhoto.getValue();
+    }
 
     try {
         const res = await fetch(getApiUrl(`admin/members/${id}`), {
@@ -591,7 +813,7 @@ formEdit?.addEventListener('submit', async (e) => {
 });
 
 // ==========================================
-// 4. MODAL TAMBAH MEMBER (ADD MEMBER)
+// 4. MODAL TAMBAH MEMBER (ADD MEMBER) & KAMERA
 // ==========================================
 const modalAddMember = document.getElementById('modalAddMember');
 const btnOpenAddMember = document.getElementById('btnOpenAddMember');
@@ -604,6 +826,195 @@ const packageActivationFields = document.getElementById('packageActivationFields
 const memberStartDate = document.getElementById('memberStartDate');
 const packageInfoBadge = document.getElementById('packageInfoBadge');
 
+// Elemen Kamera & Foto Setengah Badan (dibuat sebagai factory agar dipakai modal Tambah & Edit)
+function createPhotoCapture(ids) {
+    const el = {
+        wrapper: document.getElementById(ids.wrapper),
+        placeholder: document.getElementById(ids.placeholder),
+        stream: document.getElementById(ids.stream),
+        video: document.getElementById(ids.video),
+        preview: document.getElementById(ids.preview),
+        canvas: document.getElementById(ids.canvas),
+        data: document.getElementById(ids.data),
+        file: document.getElementById(ids.file),
+        initial: document.getElementById(ids.initial),
+        active: document.getElementById(ids.active),
+        captured: document.getElementById(ids.captured),
+        btnStart: document.getElementById(ids.btnStart),
+        btnCapture: document.getElementById(ids.btnCapture),
+        btnStop: document.getElementById(ids.btnStop),
+        btnRetake: document.getElementById(ids.btnRetake),
+        btnRemove: document.getElementById(ids.btnRemove),
+    };
+
+    let stream = null;
+    let dirty = false;
+
+    function render(state) {
+        if (el.stream) el.stream.style.display = state === 'streaming' ? 'block' : 'none';
+        if (el.preview) el.preview.style.display = state === 'photo' ? 'block' : 'none';
+        if (el.placeholder) el.placeholder.style.display = state === 'empty' ? 'flex' : 'none';
+        if (el.wrapper) {
+            el.wrapper.className = 'photo-portrait-wrapper' +
+                (state === 'streaming' ? ' is-streaming' : state === 'photo' ? ' has-photo' : '');
+        }
+        if (el.initial) el.initial.style.display = state === 'empty' ? 'flex' : 'none';
+        if (el.active) el.active.style.display = state === 'streaming' ? 'flex' : 'none';
+        if (el.captured) el.captured.style.display = state === 'photo' ? 'flex' : 'none';
+    }
+
+    function stopStream() {
+        if (stream) {
+            stream.getTracks().forEach(t => t.stop());
+            stream = null;
+        }
+        if (el.video) el.video.srcObject = null;
+    }
+
+    async function start() {
+        try {
+            stopStream();
+            stream = await navigator.mediaDevices.getUserMedia({
+                video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } },
+                audio: false,
+            });
+            if (el.video) {
+                el.video.srcObject = stream;
+                await el.video.play();
+            }
+            render('streaming');
+        } catch (err) {
+            console.warn('Gagal mengakses kamera:', err);
+            showToast('Tidak dapat mengakses kamera. Silakan gunakan tombol Upload Berkas.');
+            stopStream();
+            render((el.preview && el.preview.getAttribute('src')) ? 'photo' : 'empty');
+        }
+    }
+
+    function stop() {
+        stopStream();
+        if (el.preview && el.preview.getAttribute('src')) {
+            render('photo');
+        } else {
+            render('empty');
+        }
+    }
+
+    function capture() {
+        if (!stream || !el.video) return;
+
+        const vidW = el.video.videoWidth || 640;
+        const vidH = el.video.videoHeight || 480;
+
+        // Crop potret rasio 3:4 setengah badan
+        const targetW = 450;
+        const targetH = 600;
+
+        if (el.canvas) {
+            el.canvas.width = targetW;
+            el.canvas.height = targetH;
+            const ctx = el.canvas.getContext('2d');
+
+            let srcW = vidH * 0.75;
+            let srcH = vidH;
+            if (srcW > vidW) {
+                srcW = vidW;
+                srcH = vidW / 0.75;
+            }
+
+            const srcX = (vidW - srcW) / 2;
+            const srcY = (vidH - srcH) / 2;
+
+            ctx.translate(targetW, 0);
+            ctx.scale(-1, 1);
+            ctx.drawImage(el.video, srcX, srcY, srcW, srcH, 0, 0, targetW, targetH);
+
+            const dataUrl = el.canvas.toDataURL('image/jpeg', 0.88);
+            if (el.data) el.data.value = dataUrl;
+            if (el.preview) el.preview.src = dataUrl;
+        }
+
+        dirty = true;
+        stopStream();
+        render('photo');
+    }
+
+    function remove() {
+        stopStream();
+        if (el.data) el.data.value = '';
+        if (el.file) el.file.value = '';
+        if (el.preview) el.preview.removeAttribute('src');
+        dirty = true;
+        render('empty');
+    }
+
+    // Tampilkan foto lama yang sudah tersimpan di server (dipakai modal Edit).
+    function setExisting(src) {
+        stopStream();
+        if (el.data) el.data.value = '';
+        if (el.file) el.file.value = '';
+        dirty = false;
+        if (el.preview && src) {
+            el.preview.src = src;
+            render('photo');
+        } else {
+            render('empty');
+        }
+    }
+
+    function getValue() {
+        return (el.data && el.data.value) ? el.data.value : '';
+    }
+
+    function isDirty() {
+        return dirty;
+    }
+
+    el.btnStart?.addEventListener('click', start);
+    el.btnCapture?.addEventListener('click', capture);
+    el.btnStop?.addEventListener('click', stop);
+    el.btnRetake?.addEventListener('click', start);
+    el.btnRemove?.addEventListener('click', remove);
+
+    el.file?.addEventListener('change', (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        if (!file.type.startsWith('image/')) {
+            showToast('Berkas harus berupa gambar (JPG, PNG, WEBP)');
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = (evt) => {
+            const dataUrl = evt.target?.result;
+            if (el.data) el.data.value = dataUrl;
+            if (el.preview) el.preview.src = dataUrl;
+            dirty = true;
+            render('photo');
+        };
+        reader.readAsDataURL(file);
+    });
+
+    render('empty');
+
+    return { start, stop, remove, setExisting, getValue, isDirty };
+}
+
+const addPhoto = createPhotoCapture({
+    wrapper: 'photoWrapper', placeholder: 'photoPlaceholder', stream: 'cameraStreamContainer', video: 'cameraVideo',
+    preview: 'photoPreview', canvas: 'photoCanvas', data: 'memberPhotoData', file: 'memberPhotoFile',
+    initial: 'initialPhotoControls', active: 'activeCameraControls', captured: 'capturedPhotoControls',
+    btnStart: 'btnStartCamera', btnCapture: 'btnCapturePhoto', btnStop: 'btnStopCamera', btnRetake: 'btnRetakePhoto', btnRemove: 'btnRemovePhoto',
+});
+
+const editPhoto = createPhotoCapture({
+    wrapper: 'editPhotoWrapper', placeholder: 'editPhotoPlaceholder', stream: 'editCameraStreamContainer', video: 'editCameraVideo',
+    preview: 'editPhotoPreview', canvas: 'editPhotoCanvas', data: 'editMemberPhotoData', file: 'editMemberPhotoFile',
+    initial: 'editInitialPhotoControls', active: 'editActiveCameraControls', captured: 'editCapturedPhotoControls',
+    btnStart: 'btnEditStartCamera', btnCapture: 'btnEditCapturePhoto', btnStop: 'btnEditStopCamera', btnRetake: 'btnEditRetakePhoto', btnRemove: 'btnEditRemovePhoto',
+});
+
 let availablePackages = [];
 
 async function loadPackagesForModal() {
@@ -613,7 +1024,7 @@ async function loadPackagesForModal() {
         if (json.status === 'success' && Array.isArray(json.data)) {
             availablePackages = json.data.filter(p => p.tersedia);
             if (memberPackageSelect) {
-                memberPackageSelect.innerHTML = '<option value="">-- Tanpa Paket (Registrasi Saja) --</option>' +
+                memberPackageSelect.innerHTML = '<option value="">-- Pilih Paket --</option>' +
                     availablePackages.map(p => {
                         const price = p.harga_formatted || ('Rp ' + Number(p.harga).toLocaleString('id-ID'));
                         return `<option value="${p.id}">${escapeHtml(p.nama_paket)} — ${price} (${p.durasi_hari} hari)</option>`;
@@ -650,16 +1061,18 @@ memberPackageSelect?.addEventListener('change', updatePackageFields);
 function openModal() {
     if (!modalAddMember) return;
     if (formAddMember) formAddMember.reset();
+    addPhoto.remove();
     if (memberStartDate) memberStartDate.value = new Date().toISOString().slice(0, 10);
     updatePackageFields();
     modalAddMember.classList.add('is-active');
     modalAddMember.setAttribute('aria-hidden', 'false');
     document.body.style.overflow = 'hidden';
-    window.setTimeout(() => memberNameInput?.focus(), 80);
+    window.setTimeout(() => document.getElementById('memberNik')?.focus(), 80);
 }
 
 function closeModal() {
     if (!modalAddMember) return;
+    addPhoto.remove();
     modalAddMember.classList.remove('is-active');
     modalAddMember.setAttribute('aria-hidden', 'true');
     document.body.style.overflow = '';
@@ -681,12 +1094,39 @@ formAddMember?.addEventListener('submit', async (e) => {
     if (submitBtn) submitBtn.disabled = true;
 
     const formData = new FormData(formAddMember);
+    const rawNik = (formData.get('nik') || '').trim().replace(/\D/g, '');
+    const rawPhone = (formData.get('nomor_telepon') || '').trim().replace(/\D/g, '');
+    const idPaket = Number(formData.get('id_paket')) || 0;
+
+    if (rawNik !== '' && rawNik.length !== 16) {
+        showResultModal(false, 'Validasi Gagal', 'NIK harus terdiri dari 16 digit angka sesuai KTP.');
+        if (submitBtn) submitBtn.disabled = false;
+        return;
+    }
+
+    if (rawPhone === '' || rawPhone.length < 10 || rawPhone.length > 13) {
+        showResultModal(false, 'Validasi Gagal', 'Nomor WhatsApp/HP harus berupa angka 10 sampai 13 digit.');
+        if (submitBtn) submitBtn.disabled = false;
+        return;
+    }
+
+    if (idPaket <= 0) {
+        showResultModal(false, 'Validasi Gagal', 'Paket membership wajib dipilih.');
+        if (submitBtn) submitBtn.disabled = false;
+        return;
+    }
+
     const payload = {
-        nama_lengkap: formData.get('nama_lengkap'),
-        nomor_telepon: formData.get('nomor_telepon'),
-        jenis_kelamin: formData.get('jenis_kelamin'),
-        kontak_darurat: formData.get('kontak_darurat'),
-        id_paket: Number(formData.get('id_paket')) || 0,
+        nik: rawNik,
+        nama_lengkap: (formData.get('nama_lengkap') || '').trim(),
+        tempat_lahir: (formData.get('tempat_lahir') || '').trim(),
+        tanggal_lahir: formData.get('tanggal_lahir') || undefined,
+        jenis_kelamin: formData.get('jenis_kelamin') || 'pria',
+        alamat: (formData.get('alamat') || '').trim(),
+        nomor_telepon: rawPhone,
+        kontak_darurat: (formData.get('kontak_darurat') || '').trim().replace(/\D/g, ''),
+        foto: addPhoto.getValue() || undefined,
+        id_paket: idPaket,
         tanggal_mulai: formData.get('tanggal_mulai') || undefined,
         metode_pembayaran: formData.get('metode_pembayaran') || 'tunai',
     };
@@ -708,6 +1148,7 @@ formAddMember?.addEventListener('submit', async (e) => {
 
         closeModal();
         formAddMember.reset();
+        addPhoto.remove();
         updatePackageFields();
         currentPage = 1;
         loadMembers();

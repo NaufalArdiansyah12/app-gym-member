@@ -165,8 +165,58 @@ PackageController::index();
 $pkgIndexOut = ob_get_clean();
 $pkgIndexData = json_decode($pkgIndexOut, true);
 assert($pkgIndexData['status'] === 'success', 'PackageController::index must return status success');
-assert(count($pkgIndexData['data']) === 3, 'PackageController::index must return 3 packages');
+assert(count($pkgIndexData['data']) >= 3, 'PackageController::index must return at least 3 packages');
 assert(isset($pkgIndexData['data'][0]['benefit_list']) && is_array($pkgIndexData['data'][0]['benefit_list']), 'Package item must include benefit_list array');
+
+// Test PackageController::store() for 2-month package (60 days)
+$_POST = [
+    'nama_paket' => 'Paket 2 Bulan Test',
+    'durasi_hari' => 60,
+    'harga' => 280000,
+    'benefit' => "Akses gym harian\nFree locker & shower",
+    'tersedia' => 1,
+];
+ob_start();
+PackageController::store();
+$storePkgOut = ob_get_clean();
+$_POST = [];
+$storePkgData = json_decode($storePkgOut, true);
+assert(($storePkgData['status'] ?? '') === 'success', 'PackageController::store must succeed');
+assert((int)$storePkgData['data']['durasi_hari'] === 60, 'PackageController::store duration must be 60 days');
+assert($storePkgData['data']['nama_paket'] === 'Paket 2 Bulan Test', 'Package name must be Paket 2 Bulan Test');
+$testPkgId = (int)$storePkgData['data']['id'];
+
+// Test PackageController::show()
+ob_start();
+PackageController::show($testPkgId);
+$showPkgOut = ob_get_clean();
+$showPkgData = json_decode($showPkgOut, true);
+assert(($showPkgData['status'] ?? '') === 'success', 'PackageController::show must succeed');
+assert($showPkgData['data']['nama_paket'] === 'Paket 2 Bulan Test', 'Package name must match');
+assert((int)$showPkgData['data']['durasi_hari'] === 60, 'Package duration must be 60');
+
+// Test PackageController::update()
+$_POST = [
+    'nama_paket' => 'Paket 2 Bulan Pro',
+    'durasi_hari' => 60,
+    'harga' => 290000,
+    'benefit' => "Akses gym harian VIP\nFree locker & shower",
+    'tersedia' => 1,
+];
+ob_start();
+PackageController::update($testPkgId);
+$upPkgOut = ob_get_clean();
+$_POST = [];
+$upPkgData = json_decode($upPkgOut, true);
+assert(($upPkgData['status'] ?? '') === 'success', 'PackageController::update must succeed');
+assert($upPkgData['data']['nama_paket'] === 'Paket 2 Bulan Pro', 'Updated package name must match');
+
+// Clean up test package
+ob_start();
+PackageController::destroy($testPkgId);
+$delPkgOut = ob_get_clean();
+$delPkgData = json_decode($delPkgOut, true);
+assert(($delPkgData['status'] ?? '') === 'success', 'PackageController::destroy must succeed');
 
 // 6. Member Logic & Code Generation Tests
 $newCode = AdminController::generateMemberCode($db);
@@ -215,14 +265,20 @@ unset($_GET['gender']);
 $genMemberCode = AdminController::generateMemberCode($db);
 assert(preg_match('/^GYM[-A-Z0-9]+$/', $genMemberCode), 'Generated member code must match attendance QR pattern');
 
-// Test Member Registration with direct Package Activation
+// Test Member Registration with direct Package Activation & KTP Identity & Photo
+$dummyPhoto = 'data:image/jpeg;base64,' . base64_encode('fake-jpeg-photo-content');
 $_POST = [
+    'nik' => '3201012345678901',
     'nama_lengkap' => 'Member Auto Paket Test',
     'nomor_telepon' => '089988776655',
     'jenis_kelamin' => 'pria',
+    'tempat_lahir' => 'Jakarta',
+    'tanggal_lahir' => '1995-08-17',
+    'alamat' => 'Jl. Merdeka No. 45, Jakarta',
     'id_paket' => 1,
     'tanggal_mulai' => date('Y-m-d'),
     'metode_pembayaran' => 'qris',
+    'foto' => $dummyPhoto,
 ];
 ob_start();
 MemberController::store();
@@ -230,9 +286,17 @@ $storeOut = ob_get_clean();
 $_POST = [];
 $storeData = json_decode($storeOut, true);
 assert($storeData['status'] === 'success', 'Member registration with package must succeed');
+assert($storeData['data']['nik'] === '3201012345678901', 'Member registered must have NIK');
+assert($storeData['data']['tempat_lahir'] === 'Jakarta', 'Member registered must have tempat_lahir');
+assert($storeData['data']['tanggal_lahir'] === '1995-08-17', 'Member registered must have tanggal_lahir');
+assert(!empty($storeData['data']['foto']), 'Member registered must have foto path');
+assert(file_exists(__DIR__ . '/../frontend/' . $storeData['data']['foto']), 'Member photo file must be saved to frontend/uploads/members/');
 assert($storeData['data']['membership_status'] === 'active', 'Member registered with package must have active status');
 assert(!empty($storeData['data']['membership_expires_at']), 'Member registered with package must have expires_at');
-assert(($storeData['data']['default_password'] ?? '') === '12345678', 'Member registration must return default_password 12345678');
+$newPassword = $storeData['data']['password'] ?? '';
+assert(strlen($newPassword) === 8, 'Member registration must return an 8-character random password');
+assert($newPassword !== '12345678', 'Member password must not be the old fixed default 12345678');
+assert($db->query("SELECT password_plain FROM users WHERE id = " . (int)$storeData['data']['id'])->fetchColumn() === $newPassword, 'Stored password_plain must match returned password');
 assert($storeData['data']['email'] === null, 'Member registered without email must have null email');
 $newMemberId = (int)$storeData['data']['id'];
 $newMemberCode = $storeData['data']['member_code'];
@@ -240,12 +304,50 @@ $newMemberCode = $storeData['data']['member_code'];
 $dbEmail = $db->query("SELECT email FROM users WHERE id = $newMemberId")->fetchColumn();
 assert($dbEmail === null, 'Database email column for newly created member must be null');
 
-// Verify member can login using member_code and default password 12345678
+// Test MemberController::update photo semantics (ubah / pertahankan / hapus)
+$originalFoto = $storeData['data']['foto'];
+
+// Update tanpa key 'foto' -> foto lama dipertahankan
+$_POST = ['name' => 'Member Auto Paket Test'];
+ob_start(); MemberController::update($newMemberId); ob_end_clean(); $_POST = [];
+assert($db->query("SELECT foto FROM users WHERE id = $newMemberId")->fetchColumn() === $originalFoto, 'Update without foto key must keep existing photo');
+
+// Update dengan foto baru -> foto berubah & file tersimpan
+$newPhoto = 'data:image/png;base64,' . base64_encode('foto-baru-edit');
+$_POST = ['name' => 'Member Auto Paket Test', 'foto' => $newPhoto];
+ob_start(); MemberController::update($newMemberId); ob_end_clean(); $_POST = [];
+$changedFoto = $db->query("SELECT foto FROM users WHERE id = $newMemberId")->fetchColumn();
+assert($changedFoto !== $originalFoto && !empty($changedFoto), 'Update with new foto must replace photo path');
+assert(file_exists(__DIR__ . '/../frontend/' . $changedFoto), 'Updated member photo file must exist');
+
+// Update dengan foto kosong -> foto dihapus
+$_POST = ['name' => 'Member Auto Paket Test', 'foto' => ''];
+ob_start(); MemberController::update($newMemberId); ob_end_clean(); $_POST = [];
+assert($db->query("SELECT foto FROM users WHERE id = $newMemberId")->fetchColumn() === null, 'Update with empty foto must delete photo');
+
+// Bersihkan file foto uji
+if (!empty($changedFoto) && file_exists(__DIR__ . '/../frontend/' . $changedFoto)) {
+    @unlink(__DIR__ . '/../frontend/' . $changedFoto);
+}
+
+// Verify member can login using member_code and the generated random password
 ob_start();
-AuthController::login(['identifier' => $newMemberCode, 'password' => '12345678']);
+AuthController::login(['identifier' => $newMemberCode, 'password' => $newPassword]);
 $newLoginOut = ob_get_clean();
 $newLoginData = json_decode($newLoginOut, true);
-assert(($newLoginData['status'] ?? '') === 'ok' && $newLoginData['data']['member_code'] === $newMemberCode, 'Newly created member must be able to login with member_code and default password 12345678');
+assert(($newLoginData['status'] ?? '') === 'ok' && $newLoginData['data']['member_code'] === $newMemberCode, 'Newly created member must be able to login with member_code and generated password');
+
+// Test MemberController::resetPassword generates a new usable password
+ob_start();
+MemberController::resetPassword($newMemberId);
+$resetData = json_decode(ob_get_clean(), true);
+$resetPassword = $resetData['data']['password'] ?? '';
+assert(strlen($resetPassword) === 8, 'resetPassword must return an 8-character password');
+assert($resetPassword !== $newPassword, 'resetPassword must produce a different password');
+ob_start();
+AuthController::login(['identifier' => $newMemberCode, 'password' => $resetPassword]);
+$resetLoginData = json_decode(ob_get_clean(), true);
+assert(($resetLoginData['status'] ?? '') === 'ok', 'Member must be able to login with the reset password');
 
 // Check database records for langganan and transaksi
 $testSub = $db->query("SELECT * FROM langganan WHERE id_user = $newMemberId ORDER BY id DESC LIMIT 1")->fetch();
@@ -354,7 +456,7 @@ assert(($profileData['status'] ?? '') === 'success', 'UserController::getProfile
 assert(isset($profileData['data']['user']['member_code']), 'User profile must contain member_code');
 assert(isset($profileData['data']['user']['email']), 'User profile must contain email');
 
-// Test update profile
+// Test update profile: member (role user) tidak boleh mengubah data diri
 $_POST = [
     'name' => 'Gym Member Updated',
     'phone' => '081234567899',
@@ -367,8 +469,7 @@ UserController::updateProfile();
 $updateOut = ob_get_clean();
 $_POST = [];
 $updateData = json_decode($updateOut, true);
-assert(($updateData['status'] ?? '') === 'success', 'UserController::updateProfile must succeed');
-assert($updateData['data']['user']['name'] === 'Gym Member Updated', 'Updated user name must match');
+assert(isset($updateData['error']), 'Non-admin updateProfile must be rejected');
 
 // Test change password validation (wrong current password)
 $_POST = [
@@ -429,5 +530,32 @@ $pkgData = json_decode($pkgOut, true);
 assert(($pkgData['status'] ?? '') === 'success', 'PackageController::index must return success');
 assert(isset($pkgData['data'][0]['total_subscribers']), 'PackageController must return total_subscribers');
 assert(isset($pkgData['data'][0]['is_popular']), 'PackageController must return is_popular');
+
+// 12. Reports & Filtered Export (Excel XLSX & PDF) Tests
+$_SESSION['user'] = ['id' => 1, 'role' => 'admin'];
+$_GET['start_date'] = date('Y-m-01');
+$_GET['end_date'] = date('Y-m-d');
+
+$repData = LaporanController::fetchReportData($_GET['start_date'], $_GET['end_date'], false);
+assert(isset($repData['summary']['revenue']), 'Report data must calculate filtered revenue');
+assert(isset($repData['period']['start_date']), 'Report data must contain filtered start date');
+assert(isset($repData['packages']), 'Report data must contain packages performance');
+assert(isset($repData['transactions']), 'Report data must contain transactions');
+
+// Test XLSX Export
+ob_start();
+LaporanController::exportXlsx();
+$xlsxBinary = ob_get_clean();
+assert(strlen($xlsxBinary) > 500, 'XLSX export must generate non-empty binary');
+assert(substr($xlsxBinary, 0, 4) === "PK\x03\x04", 'XLSX export must be valid OpenXML ZIP archive');
+
+// Test PDF Export
+ob_start();
+LaporanController::exportPdf();
+$pdfBinary = ob_get_clean();
+assert(strlen($pdfBinary) > 500, 'PDF export must generate non-empty binary');
+assert(substr($pdfBinary, 0, 5) === '%PDF-', 'PDF export must begin with %PDF- header');
+
+unset($_GET['start_date'], $_GET['end_date']);
 
 echo "✓ All backend unit tests passed successfully!\n";

@@ -54,6 +54,25 @@ form.addEventListener('submit', async (e) => {
     }
 });
 
+// Toggle visibilitas password
+const togglePasswordBtn = document.getElementById('togglePassword');
+const passwordInput = document.getElementById('password');
+
+if (togglePasswordBtn && passwordInput) {
+    const eyeIcon = togglePasswordBtn.querySelector('.icon-eye');
+    const eyeOffIcon = togglePasswordBtn.querySelector('.icon-eye-off');
+
+    togglePasswordBtn.addEventListener('click', () => {
+        const isPassword = passwordInput.type === 'password';
+        passwordInput.type = isPassword ? 'text' : 'password';
+        togglePasswordBtn.setAttribute('aria-pressed', String(isPassword));
+        togglePasswordBtn.setAttribute('aria-label', isPassword ? 'Sembunyikan password' : 'Lihat password');
+        togglePasswordBtn.title = isPassword ? 'Sembunyikan password' : 'Lihat password';
+        eyeIcon.classList.toggle('hidden', isPassword);
+        eyeOffIcon.classList.toggle('hidden', !isPassword);
+    });
+}
+
 // Tombol aksi di pojok kanan bawah foto.
 const btnFullscreen = document.getElementById('btnFullscreen');
 const btnRefresh = document.getElementById('btnRefresh');

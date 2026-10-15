@@ -403,6 +403,45 @@
     gap: 8px;
 }
 
+/* Foto Verifikasi Member di Modal Detail */
+.modal-info-box.modal-photo-box {
+    display: flex;
+    flex-direction: column;
+}
+
+.detail-photo-holder {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 200px;
+}
+
+.detail-photo-img {
+    width: 100%;
+    max-width: 210px;
+    aspect-ratio: 3 / 4;
+    object-fit: cover;
+    border-radius: 12px;
+    border: 2px solid rgba(255, 122, 26, 0.4);
+    box-shadow: 0 8px 22px rgba(0, 0, 0, 0.4);
+}
+
+.detail-photo-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    max-width: 210px;
+    aspect-ratio: 3 / 4;
+    border: 2px dashed rgba(255, 255, 255, 0.15);
+    border-radius: 12px;
+    color: #6b7280;
+    background: rgba(255, 255, 255, 0.02);
+}
+
 .modal-info-box .info-item {
     display: flex;
     justify-content: space-between;
@@ -598,5 +637,338 @@
     background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%) !important;
     border-color: #f87171 !important;
     box-shadow: 0 4px 14px rgba(239, 68, 68, 0.4) !important;
+}
+
+/* Modal Form Large */
+.modal-dialog.modal-form-lg {
+    max-width: 680px;
+    width: 95%;
+    max-height: calc(100vh - 40px);
+    overflow-y: auto;
+}
+
+/* Sembunyikan scrollbar di semua modal (isi tetap bisa di-scroll) */
+.modal-dialog {
+    scrollbar-width: none;      /* Firefox */
+    -ms-overflow-style: none;   /* IE/Edge */
+}
+
+.modal-dialog::-webkit-scrollbar {
+    display: none;              /* Chrome/Safari */
+    width: 0;
+    height: 0;
+}
+
+/* Callout Info Akun */
+.member-auth-callout {
+    margin-bottom: 12px;
+    padding: 10px 14px;
+    font-size: 12px;
+    background: rgba(59, 130, 246, 0.08);
+    border: 1px solid rgba(59, 130, 246, 0.25);
+    border-radius: 10px;
+    color: #93c5fd;
+    line-height: 1.4;
+}
+
+.auth-code-highlight {
+    color: #fed7aa;
+    font-weight: 700;
+    font-family: monospace;
+}
+
+/* Form Section Cards */
+.form-section-card {
+    background: rgba(255, 255, 255, 0.025);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 14px;
+    padding: 16px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 8px;
+}
+
+.form-section-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 4px;
+}
+
+.section-badge {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #ff7a1a 0%, #e65100 100%);
+    color: #fff;
+    font-size: 12px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    box-shadow: 0 2px 8px rgba(255, 122, 26, 0.4);
+}
+
+.section-title {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 700;
+    color: #f3f4f6;
+}
+
+.section-desc {
+    margin: 2px 0 0;
+    font-size: 11px;
+    color: #9ca3af;
+    line-height: 1.35;
+}
+
+/* Photo Capture Half-Body Layout */
+.photo-capture-layout {
+    display: flex;
+    gap: 18px;
+    align-items: center;
+    flex-wrap: wrap;
+    padding-top: 4px;
+}
+
+.photo-portrait-wrapper {
+    width: 140px;
+    height: 185px;
+    aspect-ratio: 3 / 4;
+    border-radius: 12px;
+    border: 2px dashed rgba(255, 255, 255, 0.2);
+    background: rgba(15, 18, 25, 0.85);
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.5), 0 4px 14px rgba(0, 0, 0, 0.3);
+    transition: all 200ms ease;
+}
+
+.photo-portrait-wrapper.has-photo {
+    border: 2px solid #ff7a1a;
+    box-shadow: 0 0 16px rgba(255, 122, 26, 0.35);
+}
+
+.photo-portrait-wrapper.is-streaming {
+    border: 2px solid #ef4444;
+    box-shadow: 0 0 16px rgba(239, 68, 68, 0.35);
+}
+
+.photo-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 12px;
+    text-align: center;
+    color: #6b7280;
+}
+
+.placeholder-icon {
+    margin-bottom: 6px;
+    color: #9ca3af;
+}
+
+.placeholder-text {
+    font-size: 12px;
+    font-weight: 600;
+    color: #d1d5db;
+}
+
+.placeholder-hint {
+    font-size: 10px;
+    color: #6b7280;
+    margin-top: 2px;
+}
+
+.camera-stream-container {
+    width: 100%;
+    height: 100%;
+    position: relative;
+}
+
+.camera-stream-container video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transform: scaleX(-1);
+}
+
+.camera-guide-overlay {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.guide-face-oval {
+    width: 58px;
+    height: 76px;
+    border-radius: 50%;
+    border: 1.5px dashed rgba(255, 255, 255, 0.7);
+    margin-top: 6px;
+}
+
+.guide-torso-line {
+    width: 105px;
+    height: 48px;
+    border-top: 1.5px dashed rgba(255, 255, 255, 0.5);
+    border-radius: 50% 50% 0 0;
+    margin-top: 10px;
+}
+
+.camera-live-badge {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    padding: 2px 7px;
+    border-radius: 6px;
+    background: rgba(239, 68, 68, 0.85);
+    color: #fff;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+    animation: livePulse 1.5s infinite;
+}
+
+@keyframes livePulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+}
+
+.photo-result-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 10px;
+}
+
+/* Kontrol Kamera */
+.photo-controls {
+    flex: 1;
+    min-width: 200px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.control-group-buttons {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.btn-camera-action {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: all 160ms ease;
+    user-select: none;
+    text-decoration: none;
+}
+
+.btn-camera-action.primary-camera {
+    background: linear-gradient(135deg, #ff7a1a 0%, #e65100 100%);
+    border-color: rgba(255, 255, 255, 0.25);
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(255, 122, 26, 0.35);
+}
+
+.btn-camera-action.primary-camera:hover {
+    background: linear-gradient(135deg, #ff8c38 0%, #f05a0a 100%);
+    transform: translateY(-1px);
+}
+
+.btn-camera-action.soft-camera {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.16);
+    color: #e5e7eb;
+}
+
+.btn-camera-action.soft-camera:hover {
+    background: rgba(255, 255, 255, 0.14);
+    color: #fff;
+    transform: translateY(-1px);
+}
+
+.btn-camera-action.capture-camera {
+    background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+    border-color: rgba(255, 255, 255, 0.3);
+    color: #fff;
+    font-weight: 700;
+    box-shadow: 0 4px 14px rgba(34, 197, 94, 0.4);
+}
+
+.btn-camera-action.capture-camera:hover {
+    transform: translateY(-1px);
+    background: linear-gradient(135deg, #34d399 0%, #15803d 100%);
+}
+
+.btn-camera-action.cancel-camera,
+.btn-camera-action.danger-camera {
+    background: rgba(239, 68, 68, 0.15);
+    border-color: rgba(239, 68, 68, 0.35);
+    color: #f87171;
+}
+
+.btn-camera-action.cancel-camera:hover,
+.btn-camera-action.danger-camera:hover {
+    background: rgba(239, 68, 68, 0.25);
+    color: #fff;
+}
+
+.photo-guide-note {
+    margin: 0;
+    font-size: 11px;
+    color: #9ca3af;
+    line-height: 1.4;
+}
+
+.required-star {
+    color: #ef4444;
+}
+
+.field-hint {
+    font-size: 11px;
+    color: #9ca3af;
+}
+
+/* Thumbnail Tabel Member */
+.member-cell-profile {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.member-table-avatar {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    background: rgba(255, 122, 26, 0.15);
+    border: 1px solid rgba(255, 122, 26, 0.3);
+    color: #ff9142;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 700;
+    flex-shrink: 0;
 }
 

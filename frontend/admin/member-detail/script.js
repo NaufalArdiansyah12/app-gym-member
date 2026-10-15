@@ -116,14 +116,31 @@ async function loadMemberDetail() {
         const { member, stats, subscriptions, transactions, attendances } = json.data;
         currentMemberData = member;
 
-        // 1. Header Profil
+        // 1. Header Profil: selalu inisial (foto member hanya untuk verifikasi)
         const avatarEl = document.getElementById('detailAvatar');
         const nameEl = document.getElementById('detailName');
         const badgeEl = document.getElementById('detailBadge');
         const codeEl = document.getElementById('detailCode');
         const createdEl = document.getElementById('detailCreatedAt');
 
-        if (avatarEl) avatarEl.textContent = member.initials || 'M';
+        if (avatarEl) {
+            avatarEl.textContent = member.initials || 'M';
+        }
+
+        // Foto Verifikasi Member
+        const photoEl = document.getElementById('detailPhoto');
+        const photoEmptyEl = document.getElementById('detailPhotoEmpty');
+        if (photoEl && photoEmptyEl) {
+            if (member.foto) {
+                photoEl.src = `../../${escapeHtml(member.foto)}`;
+                photoEl.style.display = 'block';
+                photoEmptyEl.style.display = 'none';
+            } else {
+                photoEl.removeAttribute('src');
+                photoEl.style.display = 'none';
+                photoEmptyEl.style.display = 'flex';
+            }
+        }
         if (nameEl) nameEl.textContent = member.name;
         if (badgeEl) {
             badgeEl.textContent = member.status_label || member.membership_status;
@@ -132,7 +149,18 @@ async function loadMemberDetail() {
         if (codeEl) codeEl.textContent = member.member_code;
         if (createdEl) createdEl.textContent = member.created_at_formatted || '-';
 
-        // 2. Informasi Pribadi
+        // 2. Informasi Pribadi & Identitas KTP
+        const elNik = document.getElementById('detailNik');
+        if (elNik) elNik.textContent = (member.nik && member.nik !== '-') ? member.nik : '-';
+
+        const elBirth = document.getElementById('detailBirth');
+        if (elBirth) {
+            const birthParts = [];
+            if (member.tempat_lahir && member.tempat_lahir !== '-') birthParts.push(member.tempat_lahir);
+            if (member.tanggal_lahir_formatted && member.tanggal_lahir_formatted !== '-') birthParts.push(member.tanggal_lahir_formatted);
+            elBirth.textContent = birthParts.length > 0 ? birthParts.join(', ') : '-';
+        }
+
         document.getElementById('detailPhone').textContent = member.phone || '-';
         document.getElementById('detailEmail').textContent = member.email || '-';
         document.getElementById('detailGender').textContent = member.gender === 'wanita' ? 'Wanita' : 'Pria';

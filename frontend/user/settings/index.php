@@ -4,7 +4,7 @@ $page = 'settings';
 $title = 'Pengaturan Akun';
 $pageEyebrow = 'PENGATURAN · ' . strtoupper(date('d M Y'));
 $pageHeading = 'Pengaturan Akun';
-$pageSubtitle = 'Kelola informasi pribadi, kontak, dan kata sandi login Anda.';
+$pageSubtitle = 'Lihat informasi profil Anda dan kelola kata sandi login.';
 
 ob_start();
 ?>
@@ -35,15 +35,20 @@ ob_start();
         <div class="panel-heading">
             <div>
                 <h2>Informasi Profil</h2>
-                <p class="muted">Perbarui biodata dan kontak darurat Anda.</p>
+                <p class="muted">Biodata dan kontak darurat Anda.</p>
             </div>
         </div>
 
-        <form id="profileForm" class="settings-form">
+        <div class="settings-form">
+            <div class="readonly-note">
+                <span class="tip-icon" aria-hidden="true">ℹ️</span>
+                <p>Data diri hanya dapat diubah oleh admin. Hubungi resepsionis jika ada data yang perlu diperbarui.</p>
+            </div>
+
             <div class="form-row">
                 <div class="form-group">
-                    <label for="inputName">Nama Lengkap <span class="required">*</span></label>
-                    <input type="text" id="inputName" name="name" required placeholder="Masukkan nama lengkap Anda">
+                    <label for="inputName">Nama Lengkap</label>
+                    <input type="text" id="inputName" name="name" readonly disabled class="input-disabled">
                 </div>
                 <div class="form-group">
                     <label for="inputMemberCode">Kode Member <small class="field-note">Sistem</small></label>
@@ -54,30 +59,20 @@ ob_start();
             <div class="form-row">
                 <div class="form-group">
                     <label for="inputPhone">Nomor WhatsApp / HP</label>
-                    <input type="tel" id="inputPhone" name="phone" placeholder="Contoh: 081234567890">
+                    <input type="tel" id="inputPhone" name="phone" readonly disabled class="input-disabled">
                 </div>
                 <div class="form-group">
                     <label for="inputGender">Jenis Kelamin</label>
-                    <select id="inputGender" name="gender" class="settings-select">
-                        <option value="pria">Pria (Laki-laki)</option>
-                        <option value="wanita">Wanita (Perempuan)</option>
-                    </select>
+                    <input type="text" id="inputGender" name="gender" readonly disabled class="input-disabled">
                 </div>
             </div>
 
             <div class="form-group">
                 <label for="inputEmergency">Kontak Darurat (Keluarga / Kerabat)</label>
-                <input type="text" id="inputEmergency" name="emergency_contact" placeholder="Contoh: 081299998888 (Ibu / Saudara)">
+                <input type="text" id="inputEmergency" name="emergency_contact" readonly disabled class="input-disabled">
                 <small class="form-hint">Dihubungi gym jika terjadi kondisi darurat saat berolahraga.</small>
             </div>
-
-            <div class="form-actions">
-                <button type="submit" id="btnSaveProfile" class="primary-button">
-                    <svg class="icon icon-sm" aria-hidden="true" focusable="false"><use href="#icon-check"/></svg>
-                    Simpan Perubahan Profil
-                </button>
-            </div>
-        </form>
+        </div>
     </article>
 
     <!-- PANEL 2: GANTI KATA SANDI -->

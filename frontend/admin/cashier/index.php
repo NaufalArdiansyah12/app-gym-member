@@ -158,7 +158,7 @@ ob_start();
                     <strong id="packagePrice" class="bill-price">Rp 0</strong>
                 </div>
                 <div class="bill-row" id="changeRow" hidden>
-                    <span>Estimasi Kembalian</span>
+                    <span>Kembalian</span>
                     <strong id="estimatedChange" class="bill-change">Rp 0</strong>
                 </div>
             </div>

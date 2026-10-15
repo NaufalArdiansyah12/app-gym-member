@@ -43,6 +43,8 @@ const startDateInput = document.getElementById('startDate');
 const endDateInput = document.getElementById('endDate');
 const presetButtons = document.querySelectorAll('.preset-btn');
 const btnPrintReport = document.getElementById('btnPrintReport');
+const btnExportPdf = document.getElementById('btnExportPdf');
+const btnExportExcel = document.getElementById('btnExportExcel');
 
 const statRevenue = document.getElementById('statRevenue');
 const statPeriodLabel = document.getElementById('statPeriodLabel');
@@ -553,9 +555,75 @@ btnPrintReport?.addEventListener('click', () => {
         showToast('Data laporan belum siap dicetak.');
         return;
     }
+    const origTitle = document.title;
+    const startDate = startDateInput ? startDateInput.value : '';
+    const endDate = endDateInput ? endDateInput.value : '';
+    document.title = `Laporan_KelolaGym_${startDate}_sd_${endDate}`;
     populatePrintDocument();
     window.print();
+    document.title = origTitle;
 });
+
+// Helper export file PDF / Excel (.xlsx) berdasarkan filter aktif
+async function exportReportFile(format) {
+    const startDate = startDateInput ? startDateInput.value : '';
+    const endDate = endDateInput ? endDateInput.value : '';
+
+    if (!startDate || !endDate) {
+        showToast('Pilih rentang tanggal terlebih dahulu.');
+        return;
+    }
+
+    if (startDate > endDate) {
+        showToast('Tanggal awal tidak boleh melebihi tanggal akhir.');
+        return;
+    }
+
+    const isXlsx = format === 'xlsx';
+    const targetBtn = isXlsx ? btnExportExcel : btnExportPdf;
+    const formatLabel = isXlsx ? 'Excel (.xlsx)' : 'PDF';
+
+    if (targetBtn) {
+        targetBtn.disabled = true;
+    }
+    showToast(`Menyiapkan export ${formatLabel}...`);
+
+    try {
+        const url = `${API_URL}?export=${encodeURIComponent(format)}&start_date=${encodeURIComponent(startDate)}&end_date=${encodeURIComponent(endDate)}`;
+        const res = await fetch(url, {
+            headers: {
+                'X-User-Role': user.role || 'admin'
+            }
+        });
+
+        if (!res.ok) {
+            throw new Error(`HTTP error ${res.status}`);
+        }
+
+        const blob = await res.blob();
+        const downloadUrl = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.style.display = 'none';
+        a.href = downloadUrl;
+        a.download = `Laporan_KelolaGym_${startDate}_sd_${endDate}.${isXlsx ? 'xlsx' : 'pdf'}`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(downloadUrl);
+        a.remove();
+
+        showToast(`Berhasil mengunduh laporan ${formatLabel}!`);
+    } catch (err) {
+        console.error(`Error exporting ${formatLabel}:`, err);
+        showToast(`Gagal mengunduh file ${formatLabel}.`);
+    } finally {
+        if (targetBtn) {
+            targetBtn.disabled = false;
+        }
+    }
+}
+
+btnExportPdf?.addEventListener('click', () => exportReportFile('pdf'));
+btnExportExcel?.addEventListener('click', () => exportReportFile('xlsx'));
 
 function escapeHtml(str) {
     if (typeof str !== 'string') return String(str ?? '');

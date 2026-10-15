@@ -116,6 +116,21 @@
     padding: 8px 14px;
 }
 
+.filter-actions .soft-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.filter-actions .btn-excel:hover:not(:disabled) {
+    color: #10b981;
+    border-color: rgba(16, 185, 129, 0.4);
+}
+
+.filter-actions #btnExportPdf:hover:not(:disabled) {
+    color: #f87171;
+    border-color: rgba(248, 113, 113, 0.4);
+}
+
 /* Grid Distribusi & Performa */
 .breakdown-grid {
     display: grid;

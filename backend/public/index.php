@@ -57,6 +57,11 @@ if (preg_match('#/api/admin/members/(\d+)/renew/?$#', $uri, $matches) && $method
     exit;
 }
 
+if (preg_match('#/api/admin/members/(\d+)/reset-password/?$#', $uri, $matches) && $method === 'POST') {
+    MemberController::resetPassword((int)$matches[1]);
+    exit;
+}
+
 if (preg_match('#/api/admin/members/(\d+)/?$#', $uri, $matches)) {
     $id = (int)$matches[1];
     if ($method === 'GET') {
@@ -168,7 +173,16 @@ if (preg_match('#/api/admin/transactions/?$#', $uri)) {
     }
 }
 
-if (preg_match('#/api/admin/(?:reports|laporan)/?$#', $uri) && $method === 'GET') {
+if (preg_match('#/api/admin/(?:reports|laporan)(?:/export)?/?$#', $uri) && $method === 'GET') {
+    $exportFormat = strtolower(trim($_GET['format'] ?? $_GET['export'] ?? ''));
+    if ($exportFormat === 'xlsx' || $exportFormat === 'excel') {
+        LaporanController::exportXlsx();
+        exit;
+    }
+    if ($exportFormat === 'pdf') {
+        LaporanController::exportPdf();
+        exit;
+    }
     LaporanController::index();
     exit;
 }
