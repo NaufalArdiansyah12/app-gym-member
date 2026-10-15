@@ -38,10 +38,6 @@ ob_start();
                 <svg class="icon icon-sm" aria-hidden="true" focusable="false"><use href="#icon-printer"/></svg>
                 Cetak
             </button>
-            <button id="btnExportCsv" class="soft-button" type="button" title="Unduh CSV transaksi">
-                <svg class="icon icon-sm" aria-hidden="true" focusable="false"><use href="#icon-download"/></svg>
-                Export CSV
-            </button>
         </div>
     </div>
 </section>
@@ -296,6 +292,7 @@ ob_start();
         <p>Dicetak otomatis melalui Sistem Manajemen KelolaGym · Dokumen sah operasional gym.</p>
     </div>
 </section>
+
 <?php
 $content = ob_get_clean();
 require __DIR__ . '/../layout.php';

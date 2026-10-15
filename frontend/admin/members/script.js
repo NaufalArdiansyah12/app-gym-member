@@ -67,6 +67,54 @@ function escapeHtml(str) {
         .replace(/'/g, '&#039;');
 }
 
+// ==========================================
+// MODAL STATUS FEEDBACK (BERHASIL / GAGAL)
+// ==========================================
+const modalStatusResult = document.getElementById('modalStatusResult');
+const modalResultIconBadge = document.getElementById('modalResultIconBadge');
+const modalResultIcon = document.getElementById('modalResultIcon');
+const modalResultTitle = document.getElementById('modalResultTitle');
+const modalResultMessage = document.getElementById('modalResultMessage');
+const btnModalResultClose = document.getElementById('btnModalResultClose');
+
+function showResultModal(isSuccess, title, message) {
+    if (!modalStatusResult) return;
+
+    if (isSuccess) {
+        modalResultIconBadge.className = 'result-icon-badge success-badge';
+        modalResultIcon.innerHTML = '<use href="#icon-check"/>';
+        modalResultTitle.textContent = title || 'Berhasil!';
+        modalResultTitle.style.color = '#f9fafb';
+        modalResultMessage.textContent = message || 'Aksi berhasil dilakukan.';
+        btnModalResultClose.className = 'primary-button btn-full';
+        btnModalResultClose.textContent = 'OK, Selesai';
+    } else {
+        modalResultIconBadge.className = 'result-icon-badge error-badge';
+        modalResultIcon.innerHTML = '<use href="#icon-close"/>';
+        modalResultTitle.textContent = title || 'Gagal!';
+        modalResultTitle.style.color = '#fca5a5';
+        modalResultMessage.textContent = message || 'Terjadi kesalahan saat memproses data.';
+        btnModalResultClose.className = 'primary-button btn-full btn-error-style';
+        btnModalResultClose.textContent = 'Tutup';
+    }
+
+    modalStatusResult.classList.add('is-active');
+    modalStatusResult.setAttribute('aria-hidden', 'false');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeResultModal() {
+    if (!modalStatusResult) return;
+    modalStatusResult.classList.remove('is-active');
+    modalStatusResult.setAttribute('aria-hidden', 'true');
+    document.body.style.overflow = '';
+}
+
+btnModalResultClose?.addEventListener('click', closeResultModal);
+modalStatusResult?.addEventListener('click', (e) => {
+    if (e.target === modalStatusResult) closeResultModal();
+});
+
 // ponytail: Render QR Code menggunakan lib lokal qrcodejs dengan fallback ke API gambar.
 function renderMemberQr(container, code, size = 120) {
     if (!container || !code) return;
@@ -329,7 +377,6 @@ async function openDetailModal(id) {
         document.getElementById('mdPhone').textContent = member.phone || '-';
         document.getElementById('mdGender').textContent = member.gender_label || (member.gender === 'wanita' ? 'Wanita' : 'Pria');
         document.getElementById('mdEmergency').textContent = member.emergency_contact || '-';
-        document.getElementById('mdAddress').textContent = member.address || '-';
 
         // Informasi Akun & Presensi
         document.getElementById('mdInfoCode').textContent = member.member_code;
@@ -404,8 +451,45 @@ document.getElementById('mdBtnQuickCheckin')?.addEventListener('click', async ()
     }
 });
 
-async function deleteMember(id, name, fromModal = false) {
-    if (!confirm(`Hapus data member "${name}" dari sistem?\n\nSemua riwayat presensi member ini juga akan terhapus.`)) return;
+// ==========================================
+// MODAL KONFIRMASI HAPUS MEMBER
+// ==========================================
+const modalDeleteMember = document.getElementById('modalDeleteMember');
+const btnCloseModalDelete = document.getElementById('btnCloseModalDelete');
+const btnCancelDelete = document.getElementById('btnCancelDelete');
+const btnConfirmDelete = document.getElementById('btnConfirmDelete');
+const deleteMemberName = document.getElementById('deleteMemberName');
+
+let pendingDelete = null;
+
+function openDeleteModal(id, name, fromModal = false) {
+    if (!modalDeleteMember) return;
+    pendingDelete = { id, name, fromModal };
+    if (deleteMemberName) deleteMemberName.textContent = `"${name}"`;
+    modalDeleteMember.classList.add('is-active');
+    modalDeleteMember.setAttribute('aria-hidden', 'false');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeDeleteModal() {
+    if (!modalDeleteMember) return;
+    modalDeleteMember.classList.remove('is-active');
+    modalDeleteMember.setAttribute('aria-hidden', 'true');
+    document.body.style.overflow = '';
+    pendingDelete = null;
+}
+
+btnCloseModalDelete?.addEventListener('click', closeDeleteModal);
+btnCancelDelete?.addEventListener('click', closeDeleteModal);
+modalDeleteMember?.addEventListener('click', (e) => {
+    if (e.target === modalDeleteMember) closeDeleteModal();
+});
+
+btnConfirmDelete?.addEventListener('click', async () => {
+    if (!pendingDelete) return;
+    const { id, fromModal } = pendingDelete;
+    btnConfirmDelete.disabled = true;
+    btnConfirmDelete.textContent = 'Menghapus...';
 
     try {
         const delRes = await fetch(getApiUrl(`admin/members/${id}`), {
@@ -413,16 +497,26 @@ async function deleteMember(id, name, fromModal = false) {
             credentials: 'same-origin',
         });
         const delData = await delRes.json();
+        closeDeleteModal();
+        if (fromModal) closeDetailModal();
+
         if (delRes.ok) {
-            showToast(delData.message || 'Member berhasil dihapus');
-            if (fromModal) closeDetailModal();
             loadMembers();
+            showResultModal(true, 'Member Berhasil Dihapus', delData.message || 'Member berhasil dihapus dari sistem.');
         } else {
-            showToast(delData.error || 'Gagal menghapus member');
+            showResultModal(false, 'Gagal Menghapus Member', delData.error || 'Gagal menghapus member.');
         }
     } catch {
-        showToast('Gagal terhubung ke server');
+        closeDeleteModal();
+        showResultModal(false, 'Kesalahan Jaringan', 'Gagal terhubung ke server.');
+    } finally {
+        btnConfirmDelete.disabled = false;
+        btnConfirmDelete.textContent = 'Ya, Hapus';
     }
+});
+
+function deleteMember(id, name, fromModal = false) {
+    openDeleteModal(id, name, fromModal);
 }
 
 // ==========================================
@@ -484,14 +578,13 @@ formEdit?.addEventListener('submit', async (e) => {
         const data = await res.json();
         if (res.ok) {
             closeEditModal();
-            showToast(data.message || 'Data member berhasil diperbarui!');
             loadMembers();
-            openDetailModal(id);
+            showResultModal(true, 'Data Member Diperbarui', data.message || 'Data member berhasil diperbarui.');
         } else {
-            showToast(data.error || 'Gagal memperbarui data member');
+            showResultModal(false, 'Gagal Memperbarui Member', data.error || 'Gagal memperbarui data member.');
         }
     } catch {
-        showToast('Gagal terhubung ke server');
+        showResultModal(false, 'Kesalahan Jaringan', 'Gagal terhubung ke server.');
     } finally {
         if (submitBtn) submitBtn.disabled = false;
     }
@@ -609,21 +702,18 @@ formAddMember?.addEventListener('submit', async (e) => {
         const data = await res.json();
 
         if (!res.ok) {
-            showToast(data.error || 'Gagal mendaftarkan member.');
+            showResultModal(false, 'Pendaftaran Gagal', data.error || 'Gagal mendaftarkan member.');
             return;
         }
 
         closeModal();
         formAddMember.reset();
         updatePackageFields();
-        showToast(data.message || 'Member baru berhasil didaftarkan!');
         currentPage = 1;
         loadMembers();
-        if (data.data && data.data.id) {
-            openDetailModal(data.data.id);
-        }
+        showResultModal(true, 'Pendaftaran Berhasil', data.message || 'Member baru berhasil didaftarkan.');
     } catch {
-        showToast('Gagal terhubung ke server backend.');
+        showResultModal(false, 'Kesalahan Jaringan', 'Gagal terhubung ke server backend.');
     } finally {
         if (submitBtn) submitBtn.disabled = false;
     }
@@ -638,6 +728,8 @@ document.querySelectorAll('.demo-action').forEach((button) => {
 // Tutup modal apapun dengan tombol Escape
 document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
+        if (modalStatusResult?.classList.contains('is-active')) closeResultModal();
+        if (modalDeleteMember?.classList.contains('is-active')) closeDeleteModal();
         if (modalDetailMember?.classList.contains('is-active')) closeDetailModal();
         if (modalEdit?.classList.contains('is-active')) closeEditModal();
         if (modalAddMember?.classList.contains('is-active')) closeModal();

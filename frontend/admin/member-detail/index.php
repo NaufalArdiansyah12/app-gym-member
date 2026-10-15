@@ -303,6 +303,38 @@ ob_start();
         </form>
     </div>
 </div>
+
+<!-- Modal Konfirmasi Hapus Member -->
+<div id="modalDeleteMember" class="modal-overlay" aria-hidden="true">
+    <div class="modal-dialog" role="dialog" aria-modal="true" aria-labelledby="modalDeleteTitle" style="max-width: 440px;">
+        <div class="modal-header">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <div style="width: 36px; height: 36px; border-radius: 10px; background: rgba(239, 68, 68, 0.15); display: flex; align-items: center; justify-content: center; color: #ef4444; flex-shrink: 0;">
+                    <svg class="icon" aria-hidden="true" focusable="false" style="width: 20px; height: 20px;"><use href="#icon-warning"/></svg>
+                </div>
+                <div>
+                    <h2 id="modalDeleteTitle" style="font-size: 16px; margin: 0; color: #fff;">Hapus Member</h2>
+                    <p class="muted" style="margin: 2px 0 0; font-size: 12px;">Tindakan permanen</p>
+                </div>
+            </div>
+            <button id="btnCloseModalDelete" class="icon-button modal-close-btn" type="button" aria-label="Tutup modal">
+                <svg class="icon" aria-hidden="true" focusable="false"><use href="#icon-close"/></svg>
+            </button>
+        </div>
+        <div style="padding: 18px 24px;">
+            <p style="margin: 0 0 10px; color: #f3f4f6; font-size: 14px; line-height: 1.5;">
+                Apakah Anda yakin ingin menghapus member <strong id="deleteMemberName" style="color: #ff9142;">-</strong>?
+            </p>
+            <p style="margin: 0; color: #9ca3af; font-size: 12px; line-height: 1.5;">
+                Semua data langganan, transaksi, dan riwayat presensi member ini akan dihapus secara permanen dari database.
+            </p>
+        </div>
+        <div class="modal-actions" style="display: flex; justify-content: flex-end; gap: 10px; padding: 14px 24px; border-top: 1px solid rgba(255, 255, 255, 0.08);">
+            <button id="btnCancelDelete" class="btn-cancel" type="button">Batal</button>
+            <button id="btnConfirmDelete" class="btn-submit" type="button" style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); border-color: #f87171; box-shadow: 0 4px 14px rgba(239, 68, 68, 0.4);">Ya, Hapus</button>
+        </div>
+    </div>
+</div>
 <?php
 $content = ob_get_clean();
 require __DIR__ . '/../layout.php';

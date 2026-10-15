@@ -469,7 +469,7 @@ function renderTransactions() {
     transactionCount.textContent = `Menampilkan ${filtered.length} dari ${transactions.length} transaksi`;
 
     if (!filtered.length) {
-        transactionRows.innerHTML = '<tr><td colspan="7" class="empty-row">Tidak ada transaksi ditemukan.</td></tr>';
+        transactionRows.innerHTML = '<tr><td colspan="6" class="empty-row">Tidak ada transaksi ditemukan.</td></tr>';
         return;
     }
 
@@ -495,41 +495,9 @@ function renderTransactions() {
                     <span class="method-tag method-${escapeHTML(t.metode_pembayaran)}">${escapeHTML(t.metode_pembayaran)}</span>
                 </td>
                 <td><b>${formatRupiah(t.jumlah_bayar)}</b></td>
-                <td>
-                    <button class="btn-icon-receipt" type="button" data-trx-id="${t.id}" title="Lihat Struk">Struk</button>
-                </td>
             </tr>
         `;
     }).join('');
-
-    // Attach click listeners to view receipt buttons
-    transactionRows.querySelectorAll('.btn-icon-receipt').forEach((btn) => {
-        btn.addEventListener('click', () => {
-            const trxId = Number(btn.dataset.trxId);
-            const found = transactions.find((t) => Number(t.id) === trxId);
-            if (found) {
-                openReceiptModal({
-                    invoice_code: 'TRX-' + (found.dibayar_pada ? found.dibayar_pada.slice(0, 10).replaceAll('-', '') : '') + '-' + String(found.id).padStart(4, '0'),
-                    member: {
-                        name: found.member_name,
-                        member_code: found.member_code,
-                    },
-                    paket: {
-                        nama_paket: found.nama_paket,
-                        durasi_hari: found.durasi_hari,
-                        harga: found.harga_paket,
-                    },
-                    tipe_transaksi: 'Transaksi Membership',
-                    tanggal_mulai: found.tanggal_mulai,
-                    tanggal_selesai: found.tanggal_selesai,
-                    metode_pembayaran: found.metode_pembayaran,
-                    jumlah_bayar: found.jumlah_bayar,
-                    kembalian: Math.max(0, Number(found.jumlah_bayar) - Number(found.harga_paket)),
-                    dibayar_pada: found.dibayar_pada,
-                });
-            }
-        });
-    });
 }
 
 function openReceiptModal(data) {

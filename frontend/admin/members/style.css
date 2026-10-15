@@ -524,3 +524,79 @@
     border-color: #ff7a1a;
     box-shadow: 0 0 0 3px rgba(255, 122, 26, 0.25);
 }
+
+/* Modal Status Feedback (Berhasil / Gagal) */
+.modal-result-dialog {
+    max-width: 420px;
+    padding: 30px 24px 24px;
+    text-align: center;
+}
+
+.modal-result-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+}
+
+.result-icon-badge {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 4px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.result-icon-badge .modal-icon {
+    width: 32px;
+    height: 32px;
+}
+
+.result-icon-badge.success-badge {
+    background: radial-gradient(circle, rgba(74, 222, 128, 0.3) 0%, rgba(34, 197, 94, 0.12) 100%);
+    border-color: rgba(74, 222, 128, 0.45);
+    color: #4ade80;
+    box-shadow: 0 0 24px rgba(74, 222, 128, 0.35);
+}
+
+.result-icon-badge.error-badge {
+    background: radial-gradient(circle, rgba(239, 68, 68, 0.3) 0%, rgba(220, 38, 38, 0.12) 100%);
+    border-color: rgba(239, 68, 68, 0.45);
+    color: #f87171;
+    box-shadow: 0 0 24px rgba(239, 68, 68, 0.35);
+}
+
+.modal-result-title {
+    font-size: 19px;
+    font-weight: 700;
+    color: #f9fafb;
+    margin: 0;
+}
+
+.modal-result-desc {
+    font-size: 13px;
+    color: #94a3b8;
+    line-height: 1.5;
+    margin: 0;
+    max-width: 340px;
+}
+
+.modal-result-actions {
+    margin-top: 24px;
+}
+
+.modal-result-actions .btn-full {
+    width: 100%;
+    justify-content: center;
+    padding: 12px 18px;
+}
+
+.btn-error-style {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%) !important;
+    border-color: #f87171 !important;
+    box-shadow: 0 4px 14px rgba(239, 68, 68, 0.4) !important;
+}
+

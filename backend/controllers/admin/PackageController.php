@@ -18,11 +18,24 @@ class PackageController {
                     SELECT COUNT(*) 
                     FROM langganan l 
                     WHERE l.id_paket = p.id AND l.status = 'aktif'
-                ) as total_active_members
+                ) as total_active_members,
+                (
+                    SELECT COUNT(*) 
+                    FROM langganan l 
+                    WHERE l.id_paket = p.id
+                ) as total_subscribers
             FROM paket p
             ORDER BY p.durasi_hari ASC
         ");
         $packages = $stmt->fetchAll();
+
+        $maxSubscribers = 0;
+        foreach ($packages as $p) {
+            $count = (int)($p['total_subscribers'] ?? 0);
+            if ($count > $maxSubscribers) {
+                $maxSubscribers = $count;
+            }
+        }
 
         foreach ($packages as &$pkg) {
             $pkg['id'] = (int)$pkg['id'];
@@ -34,6 +47,11 @@ class PackageController {
             $pkg['benefit_list'] = array_values($benefitLines);
             $pkg['tersedia'] = (bool)$pkg['tersedia'];
             $pkg['total_active_members'] = (int)$pkg['total_active_members'];
+            $pkg['total_subscribers'] = (int)$pkg['total_subscribers'];
+            // ponytail: popularitas dinamis dari jumlah langganan di DB, fallback ke durasi 90 jika data masih kosong
+            $pkg['is_popular'] = $maxSubscribers > 0
+                ? ($pkg['total_subscribers'] === $maxSubscribers)
+                : ($pkg['durasi_hari'] === 90);
         }
 
         AdminController::json([

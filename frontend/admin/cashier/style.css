@@ -156,24 +156,6 @@
     color: #c084fc;
 }
 
-.btn-icon-receipt {
-    padding: 6px 10px;
-    border: 1px solid rgba(255, 255, 255, 0.14);
-    border-radius: 8px;
-    background: rgba(255, 255, 255, 0.06);
-    color: #d1d5db;
-    font-size: 11px;
-    cursor: pointer;
-    transition: all 160ms ease;
-}
-
-.btn-icon-receipt:hover {
-    background: rgba(255, 255, 255, 0.14);
-    border-color: rgba(255, 255, 255, 0.25);
-    color: #fff;
-    transform: translateY(-1px);
-}
-
 /* Transaction Type Selector (Liquid Glass Pills) */
 .transaction-type-selector {
     display: grid;

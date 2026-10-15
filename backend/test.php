@@ -420,4 +420,14 @@ UserController::changePassword();
 ob_end_clean();
 $_POST = [];
 
+// 11. PackageController Dynamic Popularity Test
+$_SESSION['user'] = ['id' => 1, 'role' => 'admin'];
+ob_start();
+PackageController::index();
+$pkgOut = ob_get_clean();
+$pkgData = json_decode($pkgOut, true);
+assert(($pkgData['status'] ?? '') === 'success', 'PackageController::index must return success');
+assert(isset($pkgData['data'][0]['total_subscribers']), 'PackageController must return total_subscribers');
+assert(isset($pkgData['data'][0]['is_popular']), 'PackageController must return is_popular');
+
 echo "✓ All backend unit tests passed successfully!\n";

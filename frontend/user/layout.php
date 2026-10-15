@@ -31,7 +31,6 @@ $pageDate = date('d M Y');
             <symbol id="icon-close" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></symbol>
             <symbol id="icon-download" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
             <symbol id="icon-gym" viewBox="0 0 24 24"><path d="M7 12h10M3 9v6m4-9v12M17 6v12m4-9v6M3 12h4m10 0h4"/></symbol>
-            <symbol id="icon-menu" viewBox="0 0 24 24"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></symbol>
             <symbol id="icon-nav-home" viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5V20a1.5 1.5 0 0 1-1.5 1.5H15v-5a3 3 0 0 0-6 0v5H4.5A1.5 1.5 0 0 1 3 20v-9.5Z" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
             <symbol id="icon-nav-dumbbell" viewBox="0 0 24 24"><path d="M6 8v8M18 8v8M3 10v4M21 10v4M6 12h12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
             <symbol id="icon-nav-fork-knife" viewBox="0 0 24 24"><path d="M18 3v6a3 3 0 0 1-3 3v9M5 3v5a2 2 0 0 0 2 2h0a2 2 0 0 0 2-2V3M7 10v11" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
@@ -42,9 +41,6 @@ $pageDate = date('d M Y');
 
     <!-- Mobile Top Navigation Bar -->
     <div class="mobile-nav-bar">
-        <button id="btnMobileMenu" class="mobile-menu-btn" type="button" aria-label="Buka Menu">
-            <svg class="icon"><use href="#icon-menu"/></svg>
-        </button>
         <div class="mobile-brand">
             <svg class="icon brand-mark" aria-hidden="true" focusable="false"><use href="#icon-gym"/></svg>
             <span>User<span class="accent">Gym</span></span>

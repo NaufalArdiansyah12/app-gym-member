@@ -150,25 +150,27 @@ function initAdminPackages(user) {
 
         packageGrid.innerHTML = list.map((pkg) => {
             const durasi = Number(pkg.durasi_hari);
+            const months = Math.max(1, Math.round(durasi / 30));
+            const perMonth = Math.round(pkg.harga / months);
+            const isPopular = Boolean(pkg.is_popular);
+
             let tierClass = 'tier-starter';
-            let tierBadge = 'STARTER · 1 BULAN';
+            let tierBadge = `STARTER · ${months} BULAN`;
             let tierSubtitle = 'Pilihan fleksibel bagi pemula untuk adaptasi latihan harian.';
-            let isPopular = false;
             let equivalentText = `Rp ${formatRupiah(pkg.harga)} / bulan`;
 
-            if (durasi === 90 || pkg.nama_paket.toLowerCase().includes('3 bulan')) {
+            if (isPopular) {
                 tierClass = 'tier-popular';
-                tierBadge = 'POPULER · 3 BULAN';
-                tierSubtitle = 'Waktu ideal pembentukan konsistensi dan progres fisik nyata.';
-                isPopular = true;
-                const perMonth = Math.round(pkg.harga / 3);
-                equivalentText = `Setara Rp ${formatRupiah(perMonth)} / bulan`;
-            } else if (durasi === 180 || pkg.nama_paket.toLowerCase().includes('6 bulan')) {
+                tierBadge = `POPULER · ${months} BULAN`;
+                tierSubtitle = 'Paket terlaris dengan total peminat terbanyak saat ini.';
+                equivalentText = months > 1 ? `Setara Rp ${formatRupiah(perMonth)} / bulan` : equivalentText;
+            } else if (durasi >= 180 || pkg.nama_paket.toLowerCase().includes('6 bulan')) {
                 tierClass = 'tier-vip';
-                tierBadge = 'VIP PRO · 6 BULAN';
+                tierBadge = `VIP PRO · ${months} BULAN`;
                 tierSubtitle = 'Pilihan hemat bernilai tinggi untuk komitmen jangka panjang.';
-                const perMonth = Math.round(pkg.harga / 6);
                 equivalentText = `Setara Rp ${formatRupiah(perMonth)} / bulan (Hemat)`;
+            } else if (months > 1) {
+                equivalentText = `Setara Rp ${formatRupiah(perMonth)} / bulan`;
             }
 
             // Benefits list parsing

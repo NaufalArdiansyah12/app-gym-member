@@ -43,7 +43,6 @@ const startDateInput = document.getElementById('startDate');
 const endDateInput = document.getElementById('endDate');
 const presetButtons = document.querySelectorAll('.preset-btn');
 const btnPrintReport = document.getElementById('btnPrintReport');
-const btnExportCsv = document.getElementById('btnExportCsv');
 
 const statRevenue = document.getElementById('statRevenue');
 const statPeriodLabel = document.getElementById('statPeriodLabel');
@@ -108,8 +107,8 @@ function formatIndoDate(dateStr) {
 function initDefaultDates() {
     const now = new Date();
     const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
-    startDateInput.value = formatLocalDate(firstDay);
-    endDateInput.value = formatLocalDate(now);
+    if (startDateInput) startDateInput.value = formatLocalDate(firstDay);
+    if (endDateInput) endDateInput.value = formatLocalDate(now);
 }
 
 // Preset handler
@@ -134,13 +133,13 @@ presetButtons.forEach(btn => {
             start = new Date(now.getFullYear(), 0, 1);
         }
 
-        startDateInput.value = formatLocalDate(start);
-        endDateInput.value = formatLocalDate(now);
+        if (startDateInput) startDateInput.value = formatLocalDate(start);
+        if (endDateInput) endDateInput.value = formatLocalDate(now);
         loadReport();
     });
 });
 
-filterForm.addEventListener('submit', (e) => {
+filterForm?.addEventListener('submit', (e) => {
     e.preventDefault();
     presetButtons.forEach(b => b.classList.remove('active'));
     loadReport();
@@ -148,8 +147,8 @@ filterForm.addEventListener('submit', (e) => {
 
 // Load data dari API
 async function loadReport() {
-    const startDate = startDateInput.value;
-    const endDate = endDateInput.value;
+    const startDate = startDateInput ? startDateInput.value : '';
+    const endDate = endDateInput ? endDateInput.value : '';
 
     if (!startDate || !endDate) {
         showToast('Pilih rentang tanggal terlebih dahulu.');
@@ -470,57 +469,20 @@ reportSearch.addEventListener('input', renderTabContent);
 filterPaymentMethod.addEventListener('change', renderTabContent);
 filterGender.addEventListener('change', renderTabContent);
 
-// Export CSV Functionality
-btnExportCsv.addEventListener('click', () => {
-    if (!reportData || !reportData.transactions || reportData.transactions.length === 0) {
-        showToast('Tidak ada data transaksi untuk diexport.');
-        return;
-    }
-
-    const txs = reportData.transactions;
-    const header = ['No. Invoice', 'Kode Member', 'Nama Member', 'No. HP', 'Paket', 'Durasi (Hari)', 'Waktu Transaksi', 'Metode Pembayaran', 'Jumlah Bayar'];
-    const rows = txs.map(t => [
-        `"${String(t.invoice_code || '').replace(/"/g, '""')}"`,
-        `"${String(t.member_code || '').replace(/"/g, '""')}"`,
-        `"${String(t.member_name || '').replace(/"/g, '""')}"`,
-        `"${String(t.member_phone || '').replace(/"/g, '""')}"`,
-        `"${String(t.nama_paket || '').replace(/"/g, '""')}"`,
-        t.durasi_hari || 0,
-        `"${String(t.dibayar_pada || '').replace(/"/g, '""')}"`,
-        `"${String(t.metode_pembayaran || '').replace(/"/g, '""')}"`,
-        t.jumlah_bayar || 0
-    ]);
-
-    const csvContent = '\uFEFF' + [header.join(','), ...rows.map(r => r.join(','))].join('\r\n');
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    const filename = `laporan-transaksi-${startDateInput.value}-sd-${endDateInput.value}.csv`;
-
-    link.setAttribute('href', url);
-    link.setAttribute('download', filename);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-
-    showToast('File CSV berhasil diunduh.');
-});
-
-// Print Report Functionality
-btnPrintReport.addEventListener('click', () => {
-    if (!reportData) {
-        showToast('Data laporan belum siap dicetak.');
-        return;
-    }
+// Helper Populasi Dokumen Cetak / PDF
+function populatePrintDocument() {
+    if (!reportData) return false;
 
     const period = reportData.period || {};
     const summary = reportData.summary || {};
 
-    // Isi template cetak
-    document.getElementById('printPeriodRange').textContent = `${formatIndoDate(period.start_date)} s/d ${formatIndoDate(period.end_date)}`;
-    document.getElementById('printGeneratedDate').textContent = new Date().toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' });
-    document.getElementById('printAdminName').textContent = user.name || 'Admin';
+    // Header Meta
+    const elPeriod = document.getElementById('printPeriodRange');
+    const elDate = document.getElementById('printGeneratedDate');
+    const elAdmin = document.getElementById('printAdminName');
+    if (elPeriod) elPeriod.textContent = `${formatIndoDate(period.start_date)} s/d ${formatIndoDate(period.end_date)}`;
+    if (elDate) elDate.textContent = new Date().toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' });
+    if (elAdmin) elAdmin.textContent = user.name || 'Admin';
 
     const totalRev = Number(summary.revenue || 0);
     const txCount = Number(summary.transaction_count || 0);
@@ -530,49 +492,68 @@ btnPrintReport.addEventListener('click', () => {
     const cashPercent = totalRev > 0 ? Math.round((cashTotal / totalRev) * 100) : 0;
     const nonCashPercent = totalRev > 0 ? Math.round((nonCashTotal / totalRev) * 100) : 0;
 
-    document.getElementById('printRevenue').textContent = summary.revenue_formatted || formatRupiah(totalRev);
-    document.getElementById('printAvgTx').textContent = summary.average_transaction_formatted || formatRupiah(avgTx);
-    document.getElementById('printNonCash').textContent = (summary.non_cash_total_formatted || formatRupiah(nonCashTotal)) + ` (${nonCashPercent}%)`;
-    document.getElementById('printCash').textContent = (summary.cash_total_formatted || formatRupiah(cashTotal)) + ` (${cashPercent}%)`;
+    const elRev = document.getElementById('printRevenue');
+    const elAvg = document.getElementById('printAvgTx');
+    const elNonCash = document.getElementById('printNonCash');
+    const elCash = document.getElementById('printCash');
+    if (elRev) elRev.textContent = summary.revenue_formatted || formatRupiah(totalRev);
+    if (elAvg) elAvg.textContent = summary.average_transaction_formatted || formatRupiah(avgTx);
+    if (elNonCash) elNonCash.textContent = (summary.non_cash_total_formatted || formatRupiah(nonCashTotal)) + ` (${nonCashPercent}%)`;
+    if (elCash) elCash.textContent = (summary.cash_total_formatted || formatRupiah(cashTotal)) + ` (${cashPercent}%)`;
 
-    // Cetak Metode
+    // Tabel Metode Pembayaran
     const methodBody = document.getElementById('printMethodBody');
-    const methodStats = reportData.method_stats || [];
-    methodBody.innerHTML = methodStats.map(m => `
-        <tr>
-            <td>${escapeHtml(String(m.metode_pembayaran).toUpperCase())}</td>
-            <td>${m.transaksi_count || 0} Transaksi</td>
-            <td>${formatRupiah(m.total_nominal || 0)}</td>
-        </tr>
-    `).join('') || '<tr><td colspan="3">-</td></tr>';
+    if (methodBody) {
+        const methodStats = reportData.method_stats || [];
+        methodBody.innerHTML = methodStats.map(m => `
+            <tr>
+                <td>${escapeHtml(String(m.metode_pembayaran).toUpperCase())}</td>
+                <td>${m.transaksi_count || 0} Transaksi</td>
+                <td>${formatRupiah(m.total_nominal || 0)}</td>
+            </tr>
+        `).join('') || '<tr><td colspan="3">-</td></tr>';
+    }
 
-    // Cetak Paket
+    // Tabel Paket
     const pkgBody = document.getElementById('printPackageBody');
-    const packages = reportData.packages || [];
-    pkgBody.innerHTML = packages.map(p => `
-        <tr>
-            <td>${escapeHtml(p.nama_paket || '-')}</td>
-            <td>${p.durasi_hari || 0} Hari</td>
-            <td>${p.harga_format || formatRupiah(p.harga || 0)}</td>
-            <td>${p.total_terjual || 0}</td>
-            <td>${p.total_pendapatan_format || formatRupiah(p.total_pendapatan || 0)}</td>
-        </tr>
-    `).join('') || '<tr><td colspan="5">-</td></tr>';
+    if (pkgBody) {
+        const packages = reportData.packages || [];
+        pkgBody.innerHTML = packages.map(p => `
+            <tr>
+                <td>${escapeHtml(p.nama_paket || '-')}</td>
+                <td>${p.durasi_hari || 0} Hari</td>
+                <td>${p.harga_format || formatRupiah(p.harga || 0)}</td>
+                <td>${p.total_terjual || 0}</td>
+                <td>${p.total_pendapatan_format || formatRupiah(p.total_pendapatan || 0)}</td>
+            </tr>
+        `).join('') || '<tr><td colspan="5">-</td></tr>';
+    }
 
-    // Cetak Transaksi
+    // Tabel Transaksi
     const txBody = document.getElementById('printTxBody');
-    const txs = reportData.transactions || [];
-    txBody.innerHTML = txs.map(t => `
-        <tr>
-            <td>${escapeHtml(t.invoice_code || '-')}</td>
-            <td>${escapeHtml(t.member_name || '-')} (${escapeHtml(t.member_code || '-')})</td>
-            <td>${escapeHtml(t.nama_paket || '-')}</td>
-            <td>${escapeHtml(t.waktu_format || t.dibayar_pada || '-')}</td>
-            <td>${escapeHtml(t.metode_pembayaran || '-')}</td>
-            <td>${t.jumlah_bayar_format || formatRupiah(t.jumlah_bayar || 0)}</td>
-        </tr>
-    `).join('') || '<tr><td colspan="6">Tidak ada transaksi pada periode ini.</td></tr>';
+    if (txBody) {
+        const txs = reportData.transactions || [];
+        txBody.innerHTML = txs.map(t => `
+            <tr>
+                <td>${escapeHtml(t.invoice_code || '-')}</td>
+                <td>${escapeHtml(t.member_name || '-')} (${escapeHtml(t.member_code || '-')})</td>
+                <td>${escapeHtml(t.nama_paket || '-')}</td>
+                <td>${escapeHtml(t.waktu_format || t.dibayar_pada || '-')}</td>
+                <td>${escapeHtml(t.metode_pembayaran || '-')}</td>
+                <td>${t.jumlah_bayar_format || formatRupiah(t.jumlah_bayar || 0)}</td>
+            </tr>
+        `).join('') || '<tr><td colspan="6">Tidak ada transaksi pada periode ini.</td></tr>';
+    }
 
+    return true;
+}
+
+btnPrintReport?.addEventListener('click', () => {
+    if (!reportData) {
+        showToast('Data laporan belum siap dicetak.');
+        return;
+    }
+    populatePrintDocument();
     window.print();
 });
 

@@ -52,7 +52,6 @@ ob_start();
             <option value="qris">QRIS</option>
             <option value="transfer">Transfer</option>
         </select>
-        <button id="btnExport" class="soft-button demo-action" type="button"><svg class="icon icon-sm" aria-hidden="true" focusable="false"><use href="#icon-download"/></svg> Export</button>
     </div>
 
     <div class="table-wrap">
@@ -65,12 +64,11 @@ ob_start();
                     <th scope="col">TANGGAL</th>
                     <th scope="col">METODE</th>
                     <th scope="col">TOTAL</th>
-                    <th scope="col"><span class="visually-hidden">Aksi</span></th>
                 </tr>
             </thead>
             <tbody id="transactionRows">
                 <tr>
-                    <td colspan="7" class="empty-row">Memuat transaksi…</td>
+                    <td colspan="6" class="empty-row">Memuat transaksi…</td>
                 </tr>
             </tbody>
         </table>
@@ -191,7 +189,6 @@ ob_start();
         <div id="receiptContent" class="receipt-body"></div>
 
         <div class="modal-actions receipt-actions">
-            <button id="btnPrintReceipt" class="soft-button" type="button"><svg class="icon icon-sm" aria-hidden="true" focusable="false"><use href="#icon-printer"/></svg> Cetak Struk</button>
             <button id="btnDoneReceipt" class="btn-submit" type="button">Selesai</button>
         </div>
     </div>

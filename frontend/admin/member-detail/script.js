@@ -423,11 +423,40 @@ formEdit?.addEventListener('submit', async (e) => {
     }
 });
 
-// Aksi Hapus Member
-document.getElementById('btnDeleteMember')?.addEventListener('click', async () => {
-    if (!currentMemberData) return;
-    const confirmDelete = confirm(`Apakah Anda yakin ingin menghapus member "${currentMemberData.name}" (${currentMemberData.member_code})?\n\nSemua riwayat langganan dan presensi member ini juga akan terhapus.`);
-    if (!confirmDelete) return;
+// ==========================================
+// MODAL KONFIRMASI HAPUS MEMBER
+// ==========================================
+const modalDeleteMember = document.getElementById('modalDeleteMember');
+const btnCloseModalDelete = document.getElementById('btnCloseModalDelete');
+const btnCancelDelete = document.getElementById('btnCancelDelete');
+const btnConfirmDelete = document.getElementById('btnConfirmDelete');
+const deleteMemberName = document.getElementById('deleteMemberName');
+
+function openDeleteModal() {
+    if (!modalDeleteMember || !currentMemberData) return;
+    if (deleteMemberName) deleteMemberName.textContent = `"${currentMemberData.name}" (${currentMemberData.member_code})`;
+    modalDeleteMember.classList.add('is-active');
+    modalDeleteMember.setAttribute('aria-hidden', 'false');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeDeleteModal() {
+    if (!modalDeleteMember) return;
+    modalDeleteMember.classList.remove('is-active');
+    modalDeleteMember.setAttribute('aria-hidden', 'true');
+    document.body.style.overflow = '';
+}
+
+document.getElementById('btnDeleteMember')?.addEventListener('click', openDeleteModal);
+btnCloseModalDelete?.addEventListener('click', closeDeleteModal);
+btnCancelDelete?.addEventListener('click', closeDeleteModal);
+modalDeleteMember?.addEventListener('click', (e) => {
+    if (e.target === modalDeleteMember) closeDeleteModal();
+});
+
+btnConfirmDelete?.addEventListener('click', async () => {
+    btnConfirmDelete.disabled = true;
+    btnConfirmDelete.textContent = 'Menghapus...';
 
     try {
         const res = await fetch(getApiUrl(`admin/members/${memberId}`), {
@@ -437,18 +466,23 @@ document.getElementById('btnDeleteMember')?.addEventListener('click', async () =
         const data = await res.json();
         if (res.ok) {
             showToast(data.message || 'Member berhasil dihapus');
+            closeDeleteModal();
             setTimeout(() => window.location.replace('../members/'), 1200);
         } else {
             showToast(data.error || 'Gagal menghapus member');
         }
     } catch {
         showToast('Gagal terhubung ke server');
+    } finally {
+        btnConfirmDelete.disabled = false;
+        btnConfirmDelete.textContent = 'Ya, Hapus';
     }
 });
 
 // Tutup modal dengan tombol Escape
 document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
+        if (modalDeleteMember?.classList.contains('is-active')) closeDeleteModal();
         if (modalRenew?.classList.contains('is-active')) closeRenewModal();
         if (modalEdit?.classList.contains('is-active')) closeEditModal();
     }
